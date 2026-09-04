@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Night Vellum — wallpaper generator + applier.
-# Dark laid-paper grain + faint blueprint grid + crop/registration marks at the
-# four MONITOR corners. One image per resolution, cached. Portable: reads the
-# real monitor list from hyprctl, no hardcoded connector or resolution.
+# Dark laid-paper grain + faint white schematic grid + crop/registration marks
+# and a corner title block. Reversed technical drawing. One image per
+# resolution, cached. Portable: reads the real monitor list from hyprctl.
 #
 # Usage:
 #   wallpaper.sh                 generate (if missing) + apply to every monitor
@@ -14,79 +14,99 @@ set -euo pipefail
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/night-vellum"
 mkdir -p "$CACHE"
 
-# --- palette -------------------------------------------------------------
+# --- palette (mirrors hypr/colors.lua) --------------------------------
 PAPER="#161513"
-INK_DIM="#8a857c"
-RULE="#3a3934"
-BLUE="#6a8494"
+INK="#e5e1d6"
+INK_DIM="#9a948a"
+INK_FAINT="#55514a"
+ACCENT="#c1663a"
 
-GRID=48          # blueprint grid pitch (px)
-GRID_ALPHA=0.11  # grid opacity
-GRAIN_PCT=7      # paper grain opacity (percent) — Overlay, zero-mean, no luma shift
+GRID=48            # schematic grid pitch (px)
+GRID_ALPHA=0.055   # grid opacity — faint
+GRAIN_PCT=7        # paper grain opacity (%)
+FONT="$(fc-match -f '%{file}' 'Iosevka' 2>/dev/null || true)"
 
 gen() { # gen W H OUTFILE
   local w=$1 h=$2 out=$3
   local tmp; tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
-  # 1. blueprint grid, as a tiled 1px hairline, knocked back to GRID_ALPHA
+  # 1. schematic grid — 1px white hairline tile, knocked back
   magick -size "${GRID}x${GRID}" xc:none \
-    -stroke "$BLUE" -strokewidth 1 -fill none \
+    -stroke "$INK" -strokewidth 1 -fill none \
     -draw "line 0,0 ${GRID},0" -draw "line 0,0 0,${GRID}" \
     "$tmp/tile.png"
   magick -size "${w}x${h}" tile:"$tmp/tile.png" \
     -channel A -evaluate multiply "$GRID_ALPHA" +channel \
     "$tmp/grid.png"
 
-  # 2. paper grain — zero-mean monochrome gaussian noise around gray50.
-  #    Composited with Overlay, gray50 is a no-op so there is no net luminance
-  #    shift; only the deviations add a faint laid-paper tooth.
+  # 2. paper grain — zero-mean gaussian noise, Overlay (no luminance shift)
   magick -size "${w}x${h}" xc:gray50 \
     -attenuate 0.8 +noise Gaussian -colorspace Gray -blur 0x0.3 \
     "$tmp/grain.png"
 
-  # 3. compose base + grain (Overlay, faint) + grid (Over)
+  # 3. base + grain + grid
   magick -size "${w}x${h}" xc:"$PAPER" \
     \( "$tmp/grain.png" -alpha on -channel A -evaluate set "${GRAIN_PCT}%" +channel \) \
     -compose Overlay -composite \
     "$tmp/grid.png" -compose Over -composite \
     "$tmp/flat.png"
 
-  # 4. crop / registration marks at the four monitor corners
-  local inset=28 len=46 reg=72
-  local d=""
+  # 4. corner crop brackets + registration crosshairs (white / ink-dim)
+  local inset=30 len=64 reg=88
+  local brackets="" regs=""
   for corner in "0 0 1 1" "$((w-1)) 0 -1 1" "0 $((h-1)) 1 -1" "$((w-1)) $((h-1)) -1 -1"; do
     read -r cx cy sx sy <<<"$corner"
-    local ax=$(( cx + sx*inset ))       ay=$(( cy + sy*inset ))
-    # L bracket
-    d+=" line ${ax},${ay} $(( ax + sx*len )),${ay}"
-    d+=" line ${ax},${ay} ${ax},$(( ay + sy*len ))"
-    # registration cross-in-circle further in
-    local rx=$(( cx + sx*reg )) ry=$(( cy + sy*reg )) r=7
-    d+=" circle ${rx},${ry} ${rx},$(( ry - r ))"
-    d+=" line $(( rx - r-3 )),${ry} $(( rx + r+3 )),${ry}"
-    d+=" line ${rx},$(( ry - r-3 )) ${rx},$(( ry + r+3 ))"
+    local ax=$(( cx + sx*inset )) ay=$(( cy + sy*inset ))
+    brackets+=" line ${ax},${ay} $(( ax + sx*len )),${ay}"
+    brackets+=" line ${ax},${ay} ${ax},$(( ay + sy*len ))"
+    local rx=$(( cx + sx*reg )) ry=$(( cy + sy*reg )) r=8
+    regs+=" circle ${rx},${ry} ${rx},$(( ry - r ))"
+    regs+=" line $(( rx - r-4 )),${ry} $(( rx + r+4 )),${ry}"
+    regs+=" line ${rx},$(( ry - r-4 )) ${rx},$(( ry + r+4 ))"
   done
-  # edge tick marks — every GRID*4 along top and left, short, ink-dim
-  local ticks=""
-  local step=$(( GRID*4 ))
-  for (( x=step; x<w; x+=step )); do ticks+=" line ${x},0 ${x},8"; done
-  for (( y=step; y<h; y+=step )); do ticks+=" line 0,${y} 8,${y}"; done
+
+  # 5. edge ticks — minor every GRID*2, major (longer) every GRID*8
+  local minor="" major=""
+  for (( x=GRID*2; x<w; x+=GRID*2 )); do
+    if (( x % (GRID*8) == 0 )); then major+=" line ${x},0 ${x},14  line ${x},$((h-1)) ${x},$((h-15))"
+    else                              minor+=" line ${x},0 ${x},7   line ${x},$((h-1)) ${x},$((h-8))"; fi
+  done
+  for (( y=GRID*2; y<h; y+=GRID*2 )); do
+    if (( y % (GRID*8) == 0 )); then major+=" line 0,${y} 14,${y}  line $((w-1)),${y} $((w-15)),${y}"
+    else                              minor+=" line 0,${y} 7,${y}   line $((w-1)),${y} $((w-8)),${y}"; fi
+  done
+
+  # 6. title block, bottom-right
+  local bw=232 bh=62
+  local bx=$(( w - 24 - bw ))
+  local by=$(( h - 24 - bh ))
+  local tb="rectangle ${bx},${by} $((bx+bw)),$((by+bh))"
+  tb+=" line ${bx},$((by+22)) $((bx+bw)),$((by+22))"
+  tb+=" line $((bx+bw-46)),${by} $((bx+bw-46)),$((by+bh))"
+  local sheet; sheet="$(date +%Y-%m-%d)"
 
   magick "$tmp/flat.png" \
-    -stroke "$BLUE"    -strokewidth 1 -fill none -draw "$d" \
-    -stroke "$INK_DIM" -strokewidth 1 -fill none -draw "$ticks" \
+    -stroke "$INK"       -strokewidth 1 -fill none -draw "$brackets" \
+    -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$regs" \
+    -stroke "$INK_FAINT" -strokewidth 1 -fill none -draw "$minor" \
+    -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$major" \
+    -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$tb" \
+    -stroke none -fill "$ACCENT" -draw "rectangle $((bx+bw-34)),$((by+30)) $((bx+bw-12)),$((by+52))" \
+    ${FONT:+-font "$FONT"} -stroke none -fill "$INK" -pointsize 13 \
+      -draw "text $((bx+12)),$((by+16)) 'NIGHT VELLUM'" \
+    -fill "$INK_DIM" -pointsize 10 \
+      -draw "text $((bx+12)),$((by+38)) 'DWG  NV-01'" \
+      -draw "text $((bx+12)),$((by+54)) \"$sheet\"" \
     -strip -define png:compression-level=9 -define png:compression-filter=5 "$out"
 }
 
 apply() {
   command -v hyprctl >/dev/null || { echo "no hyprctl; not applying" >&2; return 0; }
-  # wait for hyprpaper IPC (up to ~10s)
   for _ in $(seq 1 50); do
     hyprctl hyprpaper listloaded >/dev/null 2>&1 && break
     sleep 0.2
   done
-
   local force=$1
   mapfile -t MONS < <(hyprctl -j monitors | jq -r '.[] | "\(.name) \(.width) \(.height)"')
   local used=()
@@ -94,12 +114,10 @@ apply() {
     read -r name w h <<<"$line"
     local png="$CACHE/wall-${w}x${h}.png"
     if [[ "$force" == "1" || ! -f "$png" ]]; then gen "$w" "$h" "$png"; fi
-    hyprctl hyprpaper preload "$png"        >/dev/null 2>&1 || true
+    hyprctl hyprpaper preload "$png"             >/dev/null 2>&1 || true
     hyprctl hyprpaper wallpaper "${name},${png}" >/dev/null 2>&1 || true
     used+=("$png")
   done
-
-  # drop any preloaded images we are not using
   while read -r loaded; do
     [[ -z "$loaded" ]] && continue
     local keep=0
