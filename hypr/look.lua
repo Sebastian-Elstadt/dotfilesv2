@@ -65,7 +65,7 @@ hl.config({
     disable_hyprland_logo     = true,
     disable_splash_rendering  = true,
     force_default_wallpaper   = 0,
-    background_color          = tonumber("0x" .. c.hex.paper_bg), -- fallback bg = paper
+    background_color          = "rgb(" .. c.hex.paper_bg .. ")", -- fallback bg = paper (shown until/if wallpaper loads)
     focus_on_activate         = false,
     middle_click_paste        = false,
     enable_swallow            = false,
