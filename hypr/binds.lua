@@ -19,7 +19,7 @@ hl.bind(mod .. " + SHIFT + SPACE",  function() modes.toggle() end)      -- TILE 
 hl.bind(mod .. " + SPACE",          hl.dsp.window.float({ action = "toggle" }))  -- float/tile active window only
 hl.bind(mod .. " + M",              function() minimize.minimize() end)
 hl.bind(mod .. " + SHIFT + M",      function() minimize.toggle_drawer() end)
-hl.bind(mod .. " + L",              hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mod .. " + L",              hl.dsp.exec_cmd(SCRIPTS .. "/lock.sh"))
 
 -- --- session -----------------------------------------------------------
 hl.bind(mod .. " + SHIFT + E",      hl.dsp.exec_cmd("hyprshutdown"))
