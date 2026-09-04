@@ -6,6 +6,8 @@
 /*
 
 !/.gitignore
+!/INSTALL.md
+!/install/
 !/hypr/
 !/waybar/
 !/foot/

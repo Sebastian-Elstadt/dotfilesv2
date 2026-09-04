@@ -4,6 +4,16 @@
 local HOME    = os.getenv("HOME")
 local SCRIPTS = HOME .. "/.config/hypr/scripts"
 
+-- Are we in a VM? hyprpaper / hyprlock crash in their aquamarine backend under
+-- software GL (VirtualBox VMSVGA), so the wallpaper daemon is skipped there and
+-- misc.background_color (look.lua) carries the desktop. On bare metal this is
+-- false and the wallpaper runs normally — no config edit needed.
+local function in_vm()
+  local ok = os.execute("systemd-detect-virt --quiet")
+  return ok == true or ok == 0
+end
+local VM = in_vm()
+
 hl.on("hyprland.start", function()
   -- polkit auth agent (GUI privilege prompts)
   hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
@@ -15,13 +25,11 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("wl-paste --type text  --watch cliphist store")
   hl.exec_cmd("wl-paste --type image --watch cliphist store")
 
-  -- Wallpaper: DEFERRED on the VM. hyprpaper 0.8.4 core-dumps in its aquamarine
-  -- backend under VirtualBox software GL ("vmwgfx: Failed to open channel").
-  -- Until the VM gets working 3D accel (or we switch to swaybg), the desktop
-  -- falls back to misc.background_color = paper-bg (#161513), set in look.lua.
-  -- To re-enable once the GPU cooperates, uncomment:
-  --   hl.exec_cmd("hyprpaper")
-  --   hl.exec_cmd(SCRIPTS .. "/wallpaper.sh")
+  -- wallpaper daemon + Night Vellum schematic sheet (bare metal only)
+  if not VM then
+    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd(SCRIPTS .. "/wallpaper.sh")
+  end
 
   -- bar
   hl.exec_cmd("waybar")
@@ -30,8 +38,9 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("hypridle")
 end)
 
--- Regenerate + reapply the wallpaper when monitors change (resolution, hotplug).
--- DEFERRED with the wallpaper (see above).
--- hl.on("monitor.layout_changed", function()
---   hl.exec_cmd(SCRIPTS .. "/wallpaper.sh")
--- end)
+-- Regenerate + reapply the wallpaper when monitors change (bare metal only).
+if not VM then
+  hl.on("monitor.layout_changed", function()
+    hl.exec_cmd(SCRIPTS .. "/wallpaper.sh")
+  end)
+end

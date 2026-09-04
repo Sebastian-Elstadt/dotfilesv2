@@ -1,0 +1,8 @@
+# --- Night Vellum ----------------------------------------------------------
+# Append this to ~/.bash_profile (it is NOT part of the ~/.config repo).
+# Starts Hyprland on login at the first VT. NOT autologin — you still type your
+# username and password; this only runs after a successful login. Comment it
+# out to get a plain shell, then start manually with:  start-hyprland
+if [ -z "${WAYLAND_DISPLAY-}" ] && [ "${XDG_VTNR-}" = 1 ] && command -v start-hyprland >/dev/null 2>&1; then
+    exec start-hyprland
+fi

@@ -1,0 +1,69 @@
+# Night Vellum — package list (bare metal). One name per line, '#' comments ok.
+# Install:  install/bootstrap.sh   (or: sudo pacman -S --needed - < this, comments stripped)
+
+# --- compositor + session ---
+hyprland                      # Wayland compositor (dwindle), Lua config
+uwsm                          # (optional) systemd-managed session; start-hyprland is the default launcher
+hyprshutdown                  # clean logout/shutdown helper (bound SUPER+SHIFT+E)
+xdg-desktop-portal-hyprland   # portal backend: screenshots, screencast, global shortcuts
+xdg-desktop-portal-gtk        # portal fallback: GTK file chooser
+hyprpolkitagent               # polkit auth agent (GUI privilege prompts)
+
+# --- desktop pieces ---
+waybar                        # thin top bar
+hyprpaper                     # wallpaper daemon (runs on metal; auto-skipped in a VM)
+hyprlock                      # screen locker
+hypridle                      # idle -> dim/lock/dpms
+mako                          # notifications
+rofi                          # launcher (native Wayland)
+
+# --- terminals ---
+foot                          # default terminal
+kitty                         # themed + ready; switch to it via one var in hypr/binds.lua
+
+# --- screenshots / clipboard ---
+grim
+slurp
+wl-clipboard
+cliphist                      # clipboard history via rofi (SUPER+V)
+
+# --- wallpaper generation ---
+imagemagick                   # renders the schematic-sheet wallpaper per monitor
+
+# --- fonts ---
+ttc-iosevka                   # primary monospace everywhere
+ttf-iosevka-nerd              # Nerd Font glyphs for the bar
+noto-fonts                    # UTF-8 coverage fallback (no colour-emoji font on purpose)
+
+# --- cursor ---
+adwaita-cursors               # a real cursor theme (Wayland shows none without one)
+
+# --- audio (PipeWire — do NOT also install pulseaudio) ---
+pipewire
+pipewire-pulse
+pipewire-alsa
+pipewire-jack
+wireplumber
+
+# --- networking / auth / vcs ---
+networkmanager
+polkit
+git
+
+# --- small CLI helpers used by the config ---
+jq
+libnotify                     # notify-send
+brightnessctl                 # backlight keys (now functional on a real panel)
+playerctl                     # media keys (optional)
+
+# --- Wayland app integration ---
+qt5-wayland
+qt6-wayland
+
+# --- CPU microcode: install the ONE matching your CPU (uncomment) ---
+# amd-ucode
+# intel-ucode
+
+# --- GPU: mesa covers AMD/Intel. NVIDIA needs extra setup — see INSTALL.md. ---
+mesa
+# nvidia-open-dkms   linux-headers   egl-wayland   # only for NVIDIA
