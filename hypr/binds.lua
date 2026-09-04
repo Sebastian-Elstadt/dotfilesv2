@@ -13,7 +13,8 @@ local launcher = "rofi -show drun"
 
 -- --- core (spec) ---------------------------------------------------------
 hl.bind(mod .. " + Return",         hl.dsp.exec_cmd(terminal))
-hl.bind(mod .. " + D",              hl.dsp.exec_cmd(launcher))
+hl.bind(mod .. " + D",              hl.dsp.exec_cmd(launcher))   -- spec bind
+hl.bind(mod .. " + R",              hl.dsp.exec_cmd(launcher))   -- alias (Hyprland-default muscle memory)
 hl.bind(mod .. " + Q",              hl.dsp.window.close())
 hl.bind(mod .. " + SHIFT + SPACE",  function() modes.toggle() end)      -- TILE <-> DESK, this workspace only
 hl.bind(mod .. " + SPACE",          hl.dsp.window.float({ action = "toggle" }))  -- float/tile active window only
