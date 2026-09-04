@@ -1,35 +1,36 @@
 -- Night Vellum — palette (single source of truth for the Hyprland side).
--- Dark-mode e-ink paper with a blueprint overlay. Do NOT substitute Nord/
--- Gruvbox/Catppuccin values. Hex from the design spec.
 --
--- Other components carry their own copy of these values in their own syntax:
---   waybar/style.css, foot/foot.ini, kitty/night-vellum.conf, rofi/night-vellum.rasi,
---   mako/config, hyprlock.conf. Keep them all in sync if the palette ever changes.
+-- Revised direction (2026-09-03): dark + warm off-white, like a reversed
+-- technical drawing / industrial blueprint sheet at night. NO blue accent.
+-- One accent only — a burnt drafting orange — used sparingly for state
+-- readouts and schematic callouts.
+--
+-- Other components carry their own copy in their own syntax:
+--   waybar/style.css, foot/foot.ini, kitty/night-vellum.conf,
+--   rofi/night-vellum.rasi, mako/config, hyprlock.conf, scripts/wallpaper.sh.
+--   Keep them in sync.
 
 local M = {}
 
--- bare hex (no #), for string building
+-- bare hex (no #)
 M.hex = {
-  paper_bg     = "161513",
-  paper_raised = "1c1b18",
-  ink          = "c4bfb3",
-  ink_dim      = "8a857c",
-  rule         = "3a3934",
-  blueprint    = "6a8494",
-  alert        = "a67c52", -- warnings only, rare
+  bg        = "161513", -- ink-black, faintly warm
+  raised    = "1e1d19", -- panels / notification cards
+  ink       = "e5e1d6", -- primary "white" — high contrast, paper-warm
+  ink_dim   = "9a948a", -- secondary text
+  ink_faint = "55514a", -- grid lines, disabled, schematic hairlines
+  rule      = "34322d", -- borders / separators
+  accent    = "c1663a", -- burnt drafting orange — SPARSE (mode, alerts, ticks)
 }
 
--- Hyprland rgba() strings (8-digit hex, last pair = alpha)
+-- back-compat aliases (older module code referenced these names)
+M.hex.paper_bg     = M.hex.bg
+M.hex.paper_raised = M.hex.raised
+M.hex.alert        = M.hex.accent
+
 local function rgba(h, a) return ("rgba(%s%s)"):format(h, a or "ff") end
-M.rgba = {
-  paper_bg     = rgba(M.hex.paper_bg),
-  paper_raised = rgba(M.hex.paper_raised),
-  ink          = rgba(M.hex.ink),
-  ink_dim      = rgba(M.hex.ink_dim),
-  rule         = rgba(M.hex.rule),
-  blueprint    = rgba(M.hex.blueprint),
-  alert        = rgba(M.hex.alert),
-}
+M.rgba = {}
+for k, v in pairs(M.hex) do M.rgba[k] = rgba(v) end
 
 M.rgba_fn = rgba
 return M

@@ -10,9 +10,8 @@ hl.window_rule({
 })
 
 -- --- Hairline paper umbra: FLOATING windows only; tiled windows stay flat. ---
--- look.lua leaves shadow disabled; enable a single soft hairline here, then
--- strip it from tiled windows. "Last hl.config wins", so this must be required
--- after look.lua (hyprland.lua controls the order).
+-- look.lua leaves shadow disabled; enable one soft ink hairline here, then
+-- strip it from tiled windows. Must be required AFTER look.lua.
 hl.config({
   decoration = {
     shadow = {
@@ -21,8 +20,8 @@ hl.config({
       render_power   = 2,
       sharp          = false,
       offset         = { 0, 2 },
-      color          = tonumber("0x55" .. c.hex.paper_bg),  -- ~33% alpha over paper-dark
-      color_inactive = tonumber("0x33" .. c.hex.paper_bg),
+      color          = tonumber("0x66" .. c.hex.bg),   -- ~40% ink-black
+      color_inactive = tonumber("0x33" .. c.hex.bg),
     },
   },
 })
