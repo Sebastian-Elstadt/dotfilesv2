@@ -20,6 +20,8 @@ local M = {}
 local NAME  = "minimized"
 local SPECIAL = "special:" .. NAME
 
+local function refresh_bar() hl.exec_cmd("pkill -RTMIN+9 waybar") end
+
 function M.minimize()
   local w = hl.get_active_window()
   if not w then return end
@@ -42,10 +44,12 @@ function M.minimize()
       follow = false,           -- silent: don't pull focus to the drawer
     }))
   end
+  refresh_bar()
 end
 
 function M.toggle_drawer()
   hl.dispatch(hl.dsp.workspace.toggle_special(NAME))
+  refresh_bar()
 end
 
 return M

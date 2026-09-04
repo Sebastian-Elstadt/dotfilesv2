@@ -1,0 +1,70 @@
+// Night Vellum — Waybar. Thin, top only, one row. Title-block feel.
+// workspaces · MODE | window | MIN · audio · tray · clock
+{
+  "layer": "top",
+  "position": "top",
+  "height": 22,
+  "spacing": 0,
+  "margin-top": 0,
+  "margin-bottom": 0,
+  "fixed-center": true,
+
+  "modules-left":   ["hyprland/workspaces", "custom/mode"],
+  "modules-center": ["hyprland/window"],
+  "modules-right":  ["custom/minimized", "wireplumber", "tray", "clock"],
+
+  "hyprland/workspaces": {
+    "format": "{id}",
+    "on-click": "activate",
+    "sort-by-number": true,
+    "persistent-workspaces": {}
+  },
+
+  // TILE / DESK for the ACTIVE workspace. Polled + signalled (modes.lua sends
+  // SIGRTMIN+8 on toggle for an instant update).
+  "custom/mode": {
+    "exec": "~/.config/waybar/scripts/mode.sh",
+    "return-type": "json",
+    "interval": 1,
+    "signal": 8
+  },
+
+  "hyprland/window": {
+    "format": "{title}",
+    "max-length": 60,
+    "separate-outputs": true,
+    "rewrite": { "": "—" }
+  },
+
+  // Count of windows parked in special:minimized. Hidden when zero.
+  "custom/minimized": {
+    "exec": "~/.config/waybar/scripts/minimized.sh",
+    "return-type": "json",
+    "interval": 2,
+    "signal": 9,
+    "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"minimized\")'"
+  },
+
+  "wireplumber": {
+    "format": "VOL {volume}",
+    "format-muted": "MUTE",
+    "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "on-scroll-up": "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 2%+",
+    "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-",
+    "max-volume": 100,
+    "tooltip": false
+  },
+
+  "tray": {
+    "spacing": 8,
+    "icon-size": 14
+  },
+
+  "clock": {
+    "format": "{:%Y-%m-%d  %H:%M}",
+    "tooltip-format": "<tt>{calendar}</tt>",
+    "calendar": {
+      "format": { "today": "<b>{}</b>" }
+    }
+  }
+}

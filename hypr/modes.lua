@@ -109,7 +109,8 @@ function M.toggle()
   local id = ws.id
   if desk[id] then enter_tile(id) else enter_desk(id) end
   persist()
-  hl.dispatch(hl.dsp.event("nvmode," .. M.mode_of(id)))
+  hl.dispatch(hl.dsp.event("nvmode," .. M.mode_of(id)))   -- socket2 (future socat use)
+  hl.exec_cmd("pkill -RTMIN+8 waybar")                    -- instant Waybar MODE refresh
 end
 
 -- ---- startup replay --------------------------------------------------
