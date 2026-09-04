@@ -1,0 +1,78 @@
+/* Night Vellum — rofi theme. Squared, hairline rule, blueprint selection. */
+
+* {
+    nv-bg:      #161513;
+    nv-raised:  #1c1b18;
+    nv-ink:     #c4bfb3;
+    nv-ink-dim: #8a857c;
+    nv-rule:    #3a3934;
+    nv-blue:    #6a8494;
+
+    background-color: transparent;
+    text-color:       @nv-ink;
+    font:             "Iosevka 11";
+}
+
+window {
+    background-color: @nv-bg;
+    border:           1px;
+    border-color:     @nv-rule;
+    border-radius:    0;
+    width:            36em;
+    padding:          0;
+    location:         center;
+}
+
+mainbox {
+    padding:  0;
+    children: [ inputbar, message, listview ];
+}
+
+inputbar {
+    background-color: @nv-raised;
+    border:           0 0 1px 0;
+    border-color:     @nv-rule;
+    padding:          8px 10px;
+    spacing:          8px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    text-color: @nv-blue;
+    str:        "run:";
+}
+
+entry {
+    placeholder:        "";
+    placeholder-color:  @nv-ink-dim;
+    cursor:             text;
+}
+
+message {
+    background-color: @nv-raised;
+    border:           0 0 1px 0;
+    border-color:     @nv-rule;
+    padding:          6px 10px;
+}
+
+listview {
+    lines:        10;
+    padding:      4px 0;
+    scrollbar:    false;
+    dynamic:      true;
+    fixed-height: false;
+}
+
+element {
+    padding:      4px 12px;
+    text-color:   @nv-ink-dim;
+}
+element normal active   { text-color: @nv-blue; }
+element selected {
+    background-color: @nv-blue;
+    text-color:       @nv-bg;
+}
+element selected active { text-color: @nv-bg; }
+
+element-text { text-color: inherit; vertical-align: 0.5; }
+element-icon { size: 0; }

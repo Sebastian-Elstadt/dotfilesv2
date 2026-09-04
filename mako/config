@@ -1,0 +1,30 @@
+# Night Vellum — mako. paper-raised card, 1px rule border, squared.
+
+font=Iosevka 10
+background-color=#1c1b18
+text-color=#c4bfb3
+border-color=#3a3934
+progress-color=over #6a8494
+border-size=1
+border-radius=0
+padding=8,12
+margin=8
+outer-margin=6
+default-timeout=6000
+ignore-timeout=0
+max-visible=4
+width=340
+height=160
+layer=overlay
+anchor=top-right
+icons=0
+markup=1
+format=<b>%s</b>\n%b
+
+[urgency=low]
+text-color=#8a857c
+
+[urgency=high]
+border-color=#a67c52
+text-color=#c4bfb3
+default-timeout=0

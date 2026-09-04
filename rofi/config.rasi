@@ -1,0 +1,13 @@
+/* Night Vellum — rofi (Wayland). */
+configuration {
+    modi:                "drun,run";
+    show-icons:          false;
+    drun-display-format:  "{name}";
+    display-drun:         "run";
+    display-run:          "cmd";
+    scroll-method:        1;
+    disable-history:      false;
+    matching:             "fuzzy";
+}
+
+@theme "night-vellum"
