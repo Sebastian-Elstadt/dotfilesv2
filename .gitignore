@@ -1,0 +1,21 @@
+# Night Vellum dotfiles — WHITELIST .gitignore.
+# Ignore everything in ~/.config by default; explicitly un-ignore only the
+# directories this rice owns. Anything an app drops in ~/.config later
+# (caches, state, unrelated program configs) stays untracked automatically.
+
+/*
+
+!/.gitignore
+!/hypr/
+!/waybar/
+!/foot/
+!/kitty/
+!/rofi/
+!/mako/
+!/gtk-3.0/
+!/gtk-4.0/
+
+# Within tracked dirs, still ignore obvious runtime/cache noise:
+**/*.log
+**/__pycache__/
+**/.DS_Store
