@@ -1,12 +1,15 @@
-/* Night Vellum — rofi theme. Squared, hairline rule, blueprint selection. */
+/* Night Vellum — rofi theme. Dark + off-white, reversed technical drawing.
+   Monochrome frame; one burnt-orange detail on the prompt. Selection inverts
+   to a white block (e-ink highlight). Squared, hairline. */
 
 * {
     nv-bg:      #161513;
-    nv-raised:  #1c1b18;
-    nv-ink:     #c4bfb3;
-    nv-ink-dim: #8a857c;
-    nv-rule:    #3a3934;
-    nv-blue:    #6a8494;
+    nv-raised:  #1e1d19;
+    nv-ink:     #e5e1d6;
+    nv-ink-dim: #9a948a;
+    nv-faint:   #55514a;
+    nv-rule:    #34322d;
+    nv-accent:  #c1663a;
 
     background-color: transparent;
     text-color:       @nv-ink;
@@ -38,8 +41,8 @@ inputbar {
 }
 
 prompt {
-    text-color: @nv-blue;
-    str:        "run:";
+    text-color: @nv-accent;      /* the one orange detail */
+    str:        "run ▸";
 }
 
 entry {
@@ -67,9 +70,9 @@ element {
     padding:      4px 12px;
     text-color:   @nv-ink-dim;
 }
-element normal active   { text-color: @nv-blue; }
+element normal active   { text-color: @nv-ink; }
 element selected {
-    background-color: @nv-blue;
+    background-color: @nv-ink;      /* inverted white block */
     text-color:       @nv-bg;
 }
 element selected active { text-color: @nv-bg; }
