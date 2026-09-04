@@ -1,17 +1,18 @@
-/* Night Vellum — Waybar. Dark e-ink paper + blueprint. Thin, squared, hairline.
-   Palette mirrors hypr/colors.lua — keep in sync. */
+/* Night Vellum — Waybar. Dark + off-white, reversed technical drawing.
+   One accent: burnt drafting orange, only on state readouts. Squared, hairline.
+   Palette mirrors hypr/colors.lua. */
 
-@define-color paper-bg     #161513;
-@define-color paper-raised #1c1b18;
-@define-color ink          #c4bfb3;
-@define-color ink-dim      #8a857c;
-@define-color rule         #3a3934;
-@define-color blueprint    #6a8494;
-@define-color alert        #a67c52;
+@define-color bg        #161513;
+@define-color raised    #1e1d19;
+@define-color ink       #e5e1d6;
+@define-color ink-dim   #9a948a;
+@define-color ink-faint #55514a;
+@define-color rule      #34322d;
+@define-color accent    #c1663a;
 
 * {
   border: none;
-  border-radius: 0;                 /* rounding = 0 everywhere */
+  border-radius: 0;
   min-height: 0;
   font-family: "Iosevka", "Iosevka Nerd Font", monospace;
   font-size: 11px;
@@ -19,64 +20,57 @@
 }
 
 window#waybar {
-  background: @paper-bg;
-  color: @ink;
-  border-bottom: 1px solid @rule;   /* hairline title-block rule */
+  background: @bg;
+  color: @ink-dim;
+  border-bottom: 1px solid @rule;
 }
 
 tooltip {
-  background: @paper-raised;
+  background: @raised;
   border: 1px solid @rule;
   color: @ink;
 }
 tooltip label { color: @ink; }
 
-/* ---- workspaces ------------------------------------------------------- */
+/* ---- workspaces ---------------------------------------------------- */
 #workspaces { margin: 0; padding: 0; }
-
 #workspaces button {
-  padding: 0 7px;
+  padding: 0 8px;
   margin: 0;
-  color: @ink-dim;
+  color: @ink-faint;
   background: transparent;
   box-shadow: inset 0 -1px transparent;
 }
 #workspaces button:hover {
-  color: @ink;
-  background: transparent;
+  color: @ink-dim;
   box-shadow: inset 0 -1px @rule;
   text-shadow: none;
 }
 #workspaces button.active {
-  color: @blueprint;
-  box-shadow: inset 0 -1px @blueprint;   /* registration tick under the active ws */
+  color: @ink;                          /* current sheet = white */
+  box-shadow: inset 0 -1px @accent;     /* orange 'you are here' tick */
 }
 #workspaces button.urgent {
-  color: @alert;
-  box-shadow: inset 0 -1px @alert;
+  color: @accent;
+  box-shadow: inset 0 -1px @accent;
 }
 
-/* ---- MODE indicator (TILE / DESK) ---------------------------------- */
+/* ---- MODE readout (TILE / DESK) — the one always-orange element --- */
 #custom-mode {
-  padding: 0 9px;
-  margin: 0;
-  color: @blueprint;
+  padding: 0 10px;
+  color: @accent;
   letter-spacing: 2px;
   border-left: 1px solid @rule;
 }
 #custom-mode.desk {
-  color: @paper-bg;
-  background: @blueprint;                 /* DESK reads as the "engaged" state */
-}
-#custom-mode.tile {
-  color: @blueprint;
-  background: transparent;
+  color: @bg;
+  background: @accent;                  /* engaged state = filled */
 }
 
 /* ---- centre: window title --------------------------------------- */
 #window {
   color: @ink-dim;
-  padding: 0 12px;
+  padding: 0 14px;
   letter-spacing: 0.3px;
 }
 window#waybar.empty #window { color: transparent; }
@@ -88,20 +82,16 @@ window#waybar.empty #window { color: transparent; }
   padding: 0 10px;
   border-left: 1px solid @rule;
 }
-
 #custom-minimized {
-  color: @blueprint;
+  color: @accent;
   letter-spacing: 1px;
 }
 #custom-minimized.empty {
-  padding: 0;
-  margin: 0;
-  min-width: 0;
-  border-left: none;
+  padding: 0; margin: 0; min-width: 0; border-left: none;
 }
 
 #wireplumber { color: @ink-dim; }
-#wireplumber.muted { color: @alert; }
+#wireplumber.muted { color: @accent; }
 
 #tray {
   padding: 0 8px;
@@ -113,4 +103,12 @@ window#waybar.empty #window { color: transparent; }
 #clock {
   color: @ink;
   font-feature-settings: "tnum";
+}
+
+/* ---- schematic: bracket the bar's two bottom corners ----------- */
+#workspaces {
+  box-shadow: inset 1px 0 0 @ink-faint, inset 0 -1px 0 @ink-faint;
+}
+#clock {
+  box-shadow: inset -1px 0 0 @ink-faint, inset 0 -1px 0 @ink-faint;
 }

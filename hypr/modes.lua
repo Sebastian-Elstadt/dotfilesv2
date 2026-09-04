@@ -60,6 +60,8 @@ local function float_rule_for(id)
       name    = "nv-desk-float-ws" .. id,
       match   = { workspace = tostring(id) },
       float   = true,
+      size    = { "monitor_w*0.6", "monitor_h*0.62" },
+      center  = true,
       enabled = false,
     })
   end
@@ -79,25 +81,35 @@ local function gaps_rule_for(id)
 end
 
 -- ---- apply --------------------------------------------------------------
-local function set_windows_float(id, on)
-  local action = on and "enable" or "disable"
-  for _, w in ipairs(hl.get_workspace_windows(id) or {}) do
-    hl.dispatch(hl.dsp.window.float({ window = "address:" .. w.address, action = action }))
-  end
-end
-
 local function enter_desk(id)
   desk[id] = true
   float_rule_for(id):set_enabled(true)
   gaps_rule_for(id):set_enabled(true)
-  set_windows_float(id, true)
+
+  local mon = hl.get_active_monitor()
+  local w = mon and math.floor(mon.width  * 0.60) or 1000
+  local h = mon and math.floor(mon.height * 0.62) or 640
+
+  local wins = hl.get_workspace_windows(id) or {}
+  for i, win in ipairs(wins) do
+    local sel = "address:" .. win.address
+    local off = (i - 1) * 30 - math.floor((#wins - 1) * 15)  -- cascade around centre
+    hl.dispatch(hl.dsp.window.float({ window = sel, action = "enable" }))
+    hl.dispatch(hl.dsp.window.resize({ window = sel, x = w, y = h, relative = false }))
+    hl.dispatch(hl.dsp.window.center({ window = sel }))
+    if off ~= 0 then
+      hl.dispatch(hl.dsp.window.move({ window = sel, x = off, y = off, relative = true }))
+    end
+  end
 end
 
 local function enter_tile(id)
   desk[id] = nil
   if float_rules[id] then float_rules[id]:set_enabled(false) end
   if gaps_rules[id]  then gaps_rules[id]:set_enabled(false)  end
-  set_windows_float(id, false)
+  for _, win in ipairs(hl.get_workspace_windows(id) or {}) do
+    hl.dispatch(hl.dsp.window.float({ window = "address:" .. win.address, action = "disable" }))
+  end
 end
 
 -- ---- public ------------------------------------------------------------
