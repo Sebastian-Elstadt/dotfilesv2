@@ -47,7 +47,7 @@ const float FRAME_TH    = 1.0;
 const float REG_LEN     = 9.0;     // registration crosshair arm length
 const float REG_INSET   = 30.0;    // crosshair distance from edge
 
-const float HUD_A   = 0.0;        // bracket opacity // 0.6
+const float HUD_A   = 0.6;        // bracket opacity // 0.6
 const float FRAME_A = 0.0;        // frame opacity // 0.45
 const float REG_A   = 0.55;        // crosshair opacity // 0.55
 
@@ -134,8 +134,10 @@ void main() {
     col = mix(col, INK_DIM,   br    * HUD_A);
 
     // one accent tick: a short stub off the top-left bracket's horizontal arm
+    // (rides with the brackets — HUD_A = 0 hides it too)
     float tick = seg(dL, HUD_INSET + HUD_LEN + 6.0, HUD_INSET + HUD_LEN + 16.0)
-               * seg(dT, HUD_INSET, HUD_INSET + HUD_TH);
+               * seg(dT, HUD_INSET, HUD_INSET + HUD_TH)
+               * step(0.01, HUD_A);
     col = mix(col, ACCENT, tick);
 
     gl_FragColor = vec4(col, 1.0);
