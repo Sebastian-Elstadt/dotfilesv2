@@ -9,9 +9,16 @@
   "margin-bottom": 0,
   "fixed-center": true,
 
-  "modules-left":   ["hyprland/workspaces", "custom/mode"],
+  "modules-left":   ["custom/sheet", "hyprland/workspaces", "custom/mode"],
   "modules-center": ["hyprland/window"],
   "modules-right":  ["custom/minimized", "wireplumber", "tray", "clock"],
+
+  // static drawing-number stamp, left of the coordinate row
+  "custom/sheet": {
+    "exec": "echo NV-01",
+    "format": "{}",
+    "tooltip": false
+  },
 
   "hyprland/workspaces": {
     "format": "{id}",

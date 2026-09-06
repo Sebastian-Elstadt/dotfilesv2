@@ -1,6 +1,7 @@
-/* Night Vellum — Waybar. Dark + off-white, reversed technical drawing.
-   One accent: burnt drafting orange, only on state readouts. Squared, hairline.
-   Palette mirrors hypr/colors.lua. */
+/* Night Vellum — Waybar. The top edge of an engineering drawing sheet:
+   a hairline baseline with graduated ticks, cells divided by 1px rules,
+   corner brackets, and a stamped MODE title-block. One accent: burnt
+   drafting orange, only on state. Palette mirrors hypr/colors.lua. */
 
 @define-color bg        #161513;
 @define-color raised    #1e1d19;
@@ -19,10 +20,15 @@
   font-weight: 400;
 }
 
+/* baseline hairline + a 48px graduated tick strip along the bottom
+   (48px == the wallpaper's schematic grid pitch) */
 window#waybar {
-  background: @bg;
+  background:
+    repeating-linear-gradient(90deg, @ink-faint 0, @ink-faint 1px, transparent 1px, transparent 48px)
+      bottom / 100% 3px no-repeat,
+    @bg;
   color: @ink-dim;
-  border-bottom: 1px solid @rule;
+  border-bottom: 1px solid @ink-faint;
 }
 
 tooltip {
@@ -32,10 +38,34 @@ tooltip {
 }
 tooltip label { color: @ink; }
 
-/* ---- workspaces ---------------------------------------------------- */
-#workspaces { margin: 0; padding: 0; }
+/* ---- every module is a cell: 1px rule on the left ------------------ */
+#custom-sheet,
+#workspaces,
+#custom-mode,
+#window,
+#custom-minimized,
+#wireplumber,
+#tray,
+#clock {
+  padding: 0 10px;
+  box-shadow: inset 1px 0 0 @rule;      /* cell divider */
+}
+
+/* ---- left + right outer corner brackets -------------------------- */
+#custom-sheet {
+  padding: 0 12px;
+  color: @ink-dim;
+  letter-spacing: 2px;
+  box-shadow: inset 2px 0 0 @ink-faint, inset 0 -3px 0 @ink-faint;
+}
+#clock {
+  box-shadow: inset -2px 0 0 @ink-faint, inset 0 -3px 0 @ink-faint, inset 1px 0 0 @rule;
+}
+
+/* ---- workspaces: the coordinate row ----------------------------- */
+#workspaces { margin: 0; }
 #workspaces button {
-  padding: 0 8px;
+  padding: 0 9px;
   margin: 0;
   color: @ink-faint;
   background: transparent;
@@ -47,68 +77,55 @@ tooltip label { color: @ink; }
   text-shadow: none;
 }
 #workspaces button.active {
-  color: @ink;                          /* current sheet = white */
-  box-shadow: inset 0 -1px @accent;     /* orange 'you are here' tick */
+  color: @ink;
+  box-shadow: inset 0 -1px @accent;             /* orange 'you are here' */
 }
 #workspaces button.urgent {
   color: @accent;
   box-shadow: inset 0 -1px @accent;
 }
 
-/* ---- MODE readout (TILE / DESK) — the one always-orange element --- */
+/* ---- MODE: a stamped title-block cell --------------------------- */
 #custom-mode {
-  padding: 0 10px;
+  margin: 3px 0 3px 0;
+  padding: 0 12px;
   color: @accent;
   letter-spacing: 2px;
-  border-left: 1px solid @rule;
+  box-shadow: inset 0 0 0 1px @rule;     /* boxed on all four sides */
 }
 #custom-mode.desk {
   color: @bg;
-  background: @accent;                  /* engaged state = filled */
+  background: @accent;
+  box-shadow: inset 0 0 0 1px @accent;
 }
 
-/* ---- centre: window title --------------------------------------- */
+/* ---- centre: window title -------------------------------------- */
 #window {
   color: @ink-dim;
   padding: 0 14px;
   letter-spacing: 0.3px;
 }
-window#waybar.empty #window { color: transparent; }
+window#waybar.empty #window { color: @ink-faint; }
 
-/* ---- right side ------------------------------------------------- */
-#custom-minimized,
-#wireplumber,
-#clock {
-  padding: 0 10px;
-  border-left: 1px solid @rule;
-}
+/* ---- right side ---------------------------------------------- */
 #custom-minimized {
   color: @accent;
   letter-spacing: 1px;
 }
 #custom-minimized.empty {
-  padding: 0; margin: 0; min-width: 0; border-left: none;
+  padding: 0; margin: 0; min-width: 0;
+  box-shadow: none;
 }
 
 #wireplumber { color: @ink-dim; }
 #wireplumber.muted { color: @accent; }
 
-#tray {
-  padding: 0 8px;
-  border-left: 1px solid @rule;
-}
+#tray { padding: 0 8px; }
 #tray > .passive { -gtk-icon-effect: dim; }
 #tray > .needs-attention { -gtk-icon-effect: highlight; }
 
 #clock {
   color: @ink;
   font-feature-settings: "tnum";
-}
-
-/* ---- schematic: bracket the bar's two bottom corners ----------- */
-#workspaces {
-  box-shadow: inset 1px 0 0 @ink-faint, inset 0 -1px 0 @ink-faint;
-}
-#clock {
-  box-shadow: inset -1px 0 0 @ink-faint, inset 0 -1px 0 @ink-faint;
+  letter-spacing: 0.5px;
 }
