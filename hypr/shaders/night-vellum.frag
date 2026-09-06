@@ -33,8 +33,13 @@ const float DITHER_LIGHT = 0.10;   // dither strength in highlights
 const float SCANLINE     = 0.010;  // horizontal line modulation; 0 = off
 const float VIGNETTE     = 0.10;   // edge falloff; 0 = off
 
-const float TOP_RESERVE = 26.0;    // keep the HUD clear of the 22px waybar
-const float HUD_INSET   = 22.0;    // px from screen edge to bracket corner
+// The HUD lives inside a box inset from the screen edges. TOP clears the 22px
+// waybar; BOT keeps the frame off the very bottom so it reads as a deliberate
+// frame, not a clipped one. Brackets, frame and crosshairs are all relative to
+// this box.
+const float HUD_TOP     = 30.0;    // reserved at the top (waybar + breathing room)
+const float HUD_BOT     = 8.0;     // reserved at the bottom
+const float HUD_INSET   = 22.0;    // px from the box edge to bracket corner
 const float HUD_LEN     = 34.0;    // bracket arm length
 const float HUD_TH      = 2.0;     // bracket / crosshair line weight
 const float FRAME_INSET = 14.0;    // hairline frame distance from edge
@@ -98,32 +103,39 @@ void main() {
         col *= 1.0 - dot(uv, uv) * VIGNETTE;
     }
 
-    // ---- 3. HUD -----------------------------------------------------
-    // Top edge is pulled down by TOP_RESERVE so nothing collides with the bar.
-    float Ld = p.x, Rd = RES.x - p.x, Bd = p.y;
-    float Td = (RES.y - TOP_RESERVE) - p.y;
+    // ---- 3. HUD ---------------------------------------------------
+    // gl_FragCoord origin here is TOP-left, y increasing downward. Distances
+    // are to the edges of the HUD box, positive inside it; anything negative is
+    // outside the box and draws nothing, which keeps the waybar strip (top) and
+    // the bottom margin clear.
+    float dL = p.x;
+    float dR = RES.x - p.x;
+    float dT = p.y - HUD_TOP;
+    float dB = (RES.y - HUD_BOT) - p.y;
+
+    float cx = RES.x * 0.5;
+    float cy = HUD_TOP + (RES.y - HUD_TOP - HUD_BOT) * 0.5;   // box centre
 
     float br = clamp(
-        bracket(vec2(Ld, Bd)) + bracket(vec2(Rd, Bd)) +
-        bracket(vec2(Ld, Td)) + bracket(vec2(Rd, Td)), 0.0, 1.0);
+        bracket(vec2(dL, dT)) + bracket(vec2(dR, dT)) +
+        bracket(vec2(dL, dB)) + bracket(vec2(dR, dB)), 0.0, 1.0);
 
-    float edgemin = min(min(Ld, Rd), min(Bd, Td));
+    float edgemin = min(min(dL, dR), min(dT, dB));
     float frame   = seg(edgemin, FRAME_INSET, FRAME_INSET + FRAME_TH);
 
-    float midY = (RES.y - TOP_RESERVE) * 0.5;
     float reg = clamp(
-        plus(p, vec2(RES.x * 0.5, RES.y - TOP_RESERVE - REG_INSET), REG_LEN, HUD_TH * 0.5) +
-        plus(p, vec2(RES.x * 0.5, REG_INSET),                        REG_LEN, HUD_TH * 0.5) +
-        plus(p, vec2(REG_INSET,         midY),                       REG_LEN, HUD_TH * 0.5) +
-        plus(p, vec2(RES.x - REG_INSET, midY),                       REG_LEN, HUD_TH * 0.5), 0.0, 1.0);
+        plus(p, vec2(cx, HUD_TOP + REG_INSET),            REG_LEN, HUD_TH * 0.5) +
+        plus(p, vec2(cx, RES.y - HUD_BOT - REG_INSET),    REG_LEN, HUD_TH * 0.5) +
+        plus(p, vec2(REG_INSET,         cy),              REG_LEN, HUD_TH * 0.5) +
+        plus(p, vec2(RES.x - REG_INSET, cy),              REG_LEN, HUD_TH * 0.5), 0.0, 1.0);
 
     col = mix(col, INK_FAINT, frame * FRAME_A);
     col = mix(col, INK_DIM,   reg   * REG_A);
     col = mix(col, INK_DIM,   br    * HUD_A);
 
     // one accent tick: a short stub off the top-left bracket's horizontal arm
-    float tick = seg(Ld, HUD_INSET + HUD_LEN + 6.0, HUD_INSET + HUD_LEN + 16.0)
-               * seg(Td, HUD_INSET, HUD_INSET + HUD_TH);
+    float tick = seg(dL, HUD_INSET + HUD_LEN + 6.0, HUD_INSET + HUD_LEN + 16.0)
+               * seg(dT, HUD_INSET, HUD_INSET + HUD_TH);
     col = mix(col, ACCENT, tick);
 
     gl_FragColor = vec4(col, 1.0);
