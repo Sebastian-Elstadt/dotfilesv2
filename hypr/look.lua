@@ -43,8 +43,9 @@ hl.config({
     glow        = { enabled = false },
     motion_blur = { enabled = false },
 
-    -- Schematic HUD + halftone. Static shader (no `time`), so damage tracking
-    -- stays on. See hypr/shaders/night-vellum.frag for the tunables.
+    -- Halftone screen shader. Static (no `time`), so damage tracking stays on.
+    -- Corner brackets / reg marks are on the wallpaper, not here. Tunables at
+    -- the top of the file.
     screen_shader = HOME .. "/.config/hypr/shaders/night-vellum.frag",
   },
 

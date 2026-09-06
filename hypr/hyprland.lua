@@ -14,7 +14,7 @@ hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 
 require("colors")     -- palette (no side effects, just data)
 require("monitors")   -- outputs — generic, no hardcoded connector
-require("look")       -- rounding 0, border 1, HUD shader, fast motion
+require("look")       -- rounding 0, border 2, halftone shader, fast motion
 require("rules")      -- window/workspace rules; floating-only umbra (AFTER look)
 require("binds")      -- keybindings (pulls in modes + minimize)
 require("autostart")  -- waybar, hyprpaper, mako, hypridle, polkit, cliphist

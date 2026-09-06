@@ -40,3 +40,12 @@ hl.window_rule({
 
 -- --- special:minimized drawer: roomy, clearly a tray --------------------
 hl.workspace_rule({ workspace = "special:minimized", gaps_in = 10, gaps_out = 44 })
+
+-- --- rofi launcher: slide in from the right edge -----------------------
+-- The .rasi anchors it as a full-height right-side panel; `slide` brings it in
+-- from that anchored edge. Timing comes from the `layers` animation (look.lua).
+hl.layer_rule({
+  name      = "nv-rofi-slide",
+  match     = { namespace = "^rofi$" },
+  animation = "slide",
+})
