@@ -1,4 +1,4 @@
--- Night Vellum — palette (single source of truth for the Hyprland side).
+-- Skemos — palette (single source of truth for the Hyprland side).
 --
 -- Revised direction (2026-09-03): dark + warm off-white, like a reversed
 -- technical drawing / industrial blueprint sheet at night. NO blue accent.
@@ -6,8 +6,8 @@
 -- readouts and schematic callouts.
 --
 -- Other components carry their own copy in their own syntax:
---   waybar/style.css, foot/foot.ini, kitty/night-vellum.conf,
---   rofi/night-vellum.rasi, mako/config, hyprlock.conf, scripts/wallpaper.sh.
+--   waybar/style.css, foot/foot.ini, kitty/skemos.conf,
+--   rofi/skemos.rasi, mako/config, hyprlock.conf, scripts/wallpaper.sh.
 --   Keep them in sync.
 
 local M = {}

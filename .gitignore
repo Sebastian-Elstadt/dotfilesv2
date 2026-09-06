@@ -1,4 +1,4 @@
-# Night Vellum dotfiles — WHITELIST .gitignore.
+# Skemos dotfiles — WHITELIST .gitignore.
 # Ignore everything in ~/.config by default; explicitly un-ignore only the
 # directories this rice owns. Anything an app drops in ~/.config later
 # (caches, state, unrelated program configs) stays untracked automatically.

@@ -1,4 +1,4 @@
--- Night Vellum — look and feel.
+-- Skemos — look and feel.
 -- Dark + warm off-white, reversed-technical-drawing. No blue. rounding 0,
 -- border 1. Flat tiled windows; hairline paper umbra on FLOATING only (rules.lua).
 -- Motion: a single ~90ms linear fade — no slide, no scale. An e-ink panel redraw.
@@ -46,7 +46,7 @@ hl.config({
     -- Halftone screen shader. Static (no `time`), so damage tracking stays on.
     -- Corner brackets / reg marks are on the wallpaper, not here. Tunables at
     -- the top of the file.
-    screen_shader = HOME .. "/.config/hypr/shaders/night-vellum.frag",
+    screen_shader = HOME .. "/.config/hypr/shaders/skemos.frag",
   },
 
   dwindle = {
@@ -98,24 +98,24 @@ hl.env("HYPRCURSOR_SIZE", "24")
 -- a reticle locking on. Tiled windows still teleport (no windowsMove).
 hl.config({ animations = { enabled = true } })
 
-hl.curve("nvLinear", { type = "bezier", points = { { 0.0,  0.0 }, { 1.0, 1.0 } } })
-hl.curve("nvOut",    { type = "bezier", points = { { 0.12, 0.9 }, { 0.2, 1.0 } } })  -- snap-to-rest
-hl.curve("nvSnap",   { type = "bezier", points = { { 0.3,  0.0 }, { 0.1, 1.0 } } })  -- near-instant
-hl.curve("nvGone",   { type = "bezier", points = { { 0.05, 0.9 }, { 0.15, 1.0 } } })  -- front-loaded cut
+hl.curve("skLinear", { type = "bezier", points = { { 0.0,  0.0 }, { 1.0, 1.0 } } })
+hl.curve("skOut",    { type = "bezier", points = { { 0.12, 0.9 }, { 0.2, 1.0 } } })  -- snap-to-rest
+hl.curve("skSnap",   { type = "bezier", points = { { 0.3,  0.0 }, { 0.1, 1.0 } } })  -- near-instant
+hl.curve("skGone",   { type = "bezier", points = { { 0.05, 0.9 }, { 0.15, 1.0 } } })  -- front-loaded cut
 
-hl.animation({ leaf = "global",          enabled = true,  speed = 8,  bezier = "nvOut" })
+hl.animation({ leaf = "global",          enabled = true,  speed = 8,  bezier = "skOut" })
 
 -- windows: a hair of assemble (popin 96%) under a fast fade -> "materialise".
 -- close is near-instant: front-loaded curve + high speed, more cut than fade.
-hl.animation({ leaf = "windows",          enabled = true,  speed = 9,  bezier = "nvOut",  style = "popin 96%" })
-hl.animation({ leaf = "windowsIn",        enabled = true,  speed = 9,  bezier = "nvOut",  style = "popin 96%" })
-hl.animation({ leaf = "windowsOut",       enabled = true,  speed = 20, bezier = "nvGone", style = "popin 98%" })
+hl.animation({ leaf = "windows",          enabled = true,  speed = 9,  bezier = "skOut",  style = "popin 96%" })
+hl.animation({ leaf = "windowsIn",        enabled = true,  speed = 9,  bezier = "skOut",  style = "popin 96%" })
+hl.animation({ leaf = "windowsOut",       enabled = true,  speed = 20, bezier = "skGone", style = "popin 98%" })
 hl.animation({ leaf = "windowsMove",      enabled = false })                       -- tiles/floats teleport
 
 -- fade: the core of the dissolve
-hl.animation({ leaf = "fade",             enabled = true,  speed = 9,  bezier = "nvLinear" })
-hl.animation({ leaf = "fadeIn",           enabled = true,  speed = 9,  bezier = "nvLinear" })
-hl.animation({ leaf = "fadeOut",          enabled = true,  speed = 20, bezier = "nvGone" })
+hl.animation({ leaf = "fade",             enabled = true,  speed = 9,  bezier = "skLinear" })
+hl.animation({ leaf = "fadeIn",           enabled = true,  speed = 9,  bezier = "skLinear" })
+hl.animation({ leaf = "fadeOut",          enabled = true,  speed = 20, bezier = "skGone" })
 
 -- border: focus colour change is instant (no half-faded border lingering on a
 -- workspace switch); angle animation off
@@ -123,6 +123,6 @@ hl.animation({ leaf = "border",           enabled = false })
 hl.animation({ leaf = "borderangle",      enabled = false })
 
 -- workspaces / drawer / layers: panels swap with a short slide + fade
-hl.animation({ leaf = "workspaces",       enabled = true,  speed = 8,  bezier = "nvOut", style = "slidefade 12%" })
-hl.animation({ leaf = "specialWorkspace", enabled = true,  speed = 9,  bezier = "nvOut", style = "slidevert" })
-hl.animation({ leaf = "layers",           enabled = true,  speed = 9,  bezier = "nvOut", style = "slidefade 8%" })
+hl.animation({ leaf = "workspaces",       enabled = true,  speed = 8,  bezier = "skOut", style = "slidefade 12%" })
+hl.animation({ leaf = "specialWorkspace", enabled = true,  speed = 9,  bezier = "skOut", style = "slidevert" })
+hl.animation({ leaf = "layers",           enabled = true,  speed = 9,  bezier = "skOut", style = "slidefade 8%" })

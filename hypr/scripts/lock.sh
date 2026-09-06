@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Night Vellum — lock wrapper.
+# Skemos — lock wrapper.
 # Runs hyprlock, but if hyprlock dies within a few seconds while the session is
 # still locked (e.g. a GPU/aquamarine crash under a VM's software GL), release
 # the lock so you are never stuck on a dead lock screen.

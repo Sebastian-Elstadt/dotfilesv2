@@ -1,4 +1,4 @@
-# Night Vellum — package list (bare metal). One name per line, '#' comments ok.
+# Skemos — package list (bare metal). One name per line, '#' comments ok.
 # Install:  install/bootstrap.sh   (or: sudo pacman -S --needed - < this, comments stripped)
 
 # --- compositor + session ---

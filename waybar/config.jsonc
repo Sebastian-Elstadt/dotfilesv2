@@ -1,4 +1,4 @@
-// Night Vellum — Waybar. Thin, top only, one row. Title-block feel.
+// Skemos — Waybar. Thin, top only, one row. Title-block feel.
 // workspaces · MODE | window | MIN · audio · tray · clock
 {
   "layer": "top",
@@ -15,7 +15,7 @@
 
   // static drawing-number stamp, left of the coordinate row
   "custom/sheet": {
-    "exec": "echo NV-01",
+    "exec": "echo SK-01",
     "format": "{}",
     "tooltip": false
   },

@@ -1,0 +1,90 @@
+/* Skemos — rofi theme. Dark + off-white, reversed technical drawing.
+   Monochrome frame; one burnt-orange detail on the prompt. Selection inverts
+   to a white block (e-ink highlight). Squared, hairline. */
+
+* {
+    sk-bg:      #161513;
+    sk-raised:  #1e1d19;
+    sk-ink:     #e5e1d6;
+    sk-ink-dim: #9a948a;
+    sk-faint:   #55514a;
+    sk-rule:    #34322d;
+    sk-accent:  #c1663a;
+
+    background-color: transparent;
+    text-color:       @sk-ink;
+    font:             "Iosevka 11";
+}
+
+/* right-side panel, inset 12px from the top/right/bottom edges — the same gap a
+   tiled window keeps (gaps_out 10 + 2px border). Hyprland slides it in from the
+   right (layer rule in hypr/rules.lua). */
+window {
+    background-color: @sk-raised;
+    border:           1px;
+    border-color:     @sk-rule;
+    border-radius:    0;
+    width:            460px;
+    height:           calc(100% - 24px);   /* 100% == area below the waybar; -12 top -12 bottom */
+    padding:          6px;
+    location:         northeast;
+    anchor:           northeast;
+    y-offset:         12px;
+    x-offset:         -12px;
+}
+
+mainbox {
+    border:       1px;
+    border-color: @sk-faint;
+    padding:      0;
+    children:     [ inputbar, message, listview ];
+}
+
+inputbar {
+    background-color: @sk-raised;
+    border:           0 0 1px 0;
+    border-color:     @sk-rule;
+    padding:          8px 10px;
+    spacing:          8px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    text-color: @sk-accent;      /* the one orange detail */
+    str:        "run ▸";
+}
+
+entry {
+    placeholder:        "";
+    placeholder-color:  @sk-ink-dim;
+    cursor:             text;
+}
+
+message {
+    background-color: @sk-raised;
+    border:           0 0 1px 0;
+    border-color:     @sk-rule;
+    padding:          6px 10px;
+}
+
+listview {
+    padding:      4px 0;
+    scrollbar:    false;
+    dynamic:      false;
+    fixed-height: true;      /* fill the panel */
+    expand:       true;
+}
+
+element {
+    padding:      4px 12px;
+    text-color:   @sk-ink-dim;
+}
+element normal active   { text-color: @sk-ink; }
+element selected {
+    background-color: @sk-ink;      /* inverted white block */
+    text-color:       @sk-bg;
+}
+element selected active { text-color: @sk-bg; }
+
+element-text { text-color: inherit; vertical-align: 0.5; }
+element-icon { size: 0; }

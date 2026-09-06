@@ -1,10 +1,10 @@
--- Night Vellum — window & workspace rules.
+-- Skemos — window & workspace rules.
 
 local c = require("colors")
 
 -- Ignore app-driven maximize requests (tidier tiling).
 hl.window_rule({
-  name  = "nv-suppress-maximize",
+  name  = "sk-suppress-maximize",
   match = { class = ".*" },
   suppress_event = "maximize",
 })
@@ -25,7 +25,7 @@ hl.config({
     },
   },
 })
-hl.window_rule({ name = "nv-no-shadow-tiled", match = { float = false }, no_shadow = true })
+hl.window_rule({ name = "sk-no-shadow-tiled", match = { float = false }, no_shadow = true })
 
 -- --- Common floating dialogs -------------------------------------------------
 hl.window_rule({
@@ -45,7 +45,7 @@ hl.workspace_rule({ workspace = "special:minimized", gaps_in = 10, gaps_out = 44
 -- The .rasi anchors it as a full-height right-side panel; `slide` brings it in
 -- from that anchored edge. Timing comes from the `layers` animation (look.lua).
 hl.layer_rule({
-  name      = "nv-rofi-slide",
+  name      = "sk-rofi-slide",
   match     = { namespace = "^rofi$" },
   animation = "slide",
 })

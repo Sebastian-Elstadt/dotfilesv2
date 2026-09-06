@@ -1,4 +1,4 @@
-# Night Vellum — install on bare metal
+# Skemos — install on bare metal
 
 Getting this rice onto a fresh Arch machine. Assumes a UEFI dual-boot target.
 
@@ -47,7 +47,7 @@ bundle on a USB stick:
 git -C ~/.config remote add origin git@github.com:<you>/dotfiles.git
 git -C ~/.config push -u origin master
 #   …or bundle to a USB stick:
-git -C ~/.config bundle create /mnt/usb/night-vellum.bundle --all
+git -C ~/.config bundle create /mnt/usb/skemos.bundle --all
 ```
 
 **On the new machine**, `~/.config` already has stray files from first boot.
@@ -56,7 +56,7 @@ The whitelist `.gitignore` means you can lay the repo over the top of them:
 ```sh
 cd ~/.config
 git init
-git remote add origin <url-or-/path/to/night-vellum.bundle>
+git remote add origin <url-or-/path/to/skemos.bundle>
 git fetch origin
 git checkout -f master
 git branch --set-upstream-to=origin/master master

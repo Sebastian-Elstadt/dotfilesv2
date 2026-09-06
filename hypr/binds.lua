@@ -1,4 +1,4 @@
--- Night Vellum — keybindings.
+-- Skemos — keybindings.
 
 local modes    = require("modes")
 local minimize = require("minimize")

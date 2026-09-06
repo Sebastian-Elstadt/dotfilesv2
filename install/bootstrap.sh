@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Night Vellum — bare-metal bootstrap. Run AFTER a standard Arch base install,
+# Skemos — bare-metal bootstrap. Run AFTER a standard Arch base install,
 # as your normal user (in group wheel), from a TTY:
 #
 #     ~/.config/install/bootstrap.sh

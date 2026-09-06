@@ -1,4 +1,4 @@
-/* Night Vellum — rofi (Wayland). */
+/* Skemos — rofi (Wayland). */
 configuration {
     modi:                "drun,run";
     show-icons:          false;
@@ -10,4 +10,4 @@ configuration {
     matching:             "fuzzy";
 }
 
-@theme "night-vellum"
+@theme "skemos"

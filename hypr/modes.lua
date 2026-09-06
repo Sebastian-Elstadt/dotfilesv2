@@ -1,4 +1,4 @@
--- Night Vellum — WINDOW MODES: TILE (default) <-> DESK, per workspace, persisted.
+-- Skemos — WINDOW MODES: TILE (default) <-> DESK, per workspace, persisted.
 --
 --   TILE : dwindle, new windows tile, tight gaps (global gaps from look.lua)
 --   DESK : every window on THAT workspace floats; new windows float until
@@ -15,7 +15,7 @@
 --     disabled, enabled while in DESK                            -> gaps
 --   * on toggle, existing windows on the workspace are floated/tiled explicitly
 --   * state file + hyprland.start replay                         -> persistence
---   * hl.dsp.event("nvmode,<MODE>") on every toggle              -> Waybar updates
+--   * hl.dsp.event("skmode,<MODE>") on every toggle              -> Waybar updates
 --
 -- Sources: wiki Window-Rules (named rule :set_enabled), Workspace-Rules,
 -- Lua-utilities (hl.get_active_workspace / hl.get_workspace_windows),
@@ -24,7 +24,7 @@
 local M = {}
 
 local HOME       = os.getenv("HOME")
-local STATE_DIR  = (os.getenv("XDG_STATE_HOME") or (HOME .. "/.local/state")) .. "/night-vellum"
+local STATE_DIR  = (os.getenv("XDG_STATE_HOME") or (HOME .. "/.local/state")) .. "/skemos"
 local STATE_FILE = STATE_DIR .. "/desk-workspaces"
 
 local DESK_IN, DESK_OUT = 10, 20   -- DESK gaps (TILE uses the global 4 / 8)
@@ -57,7 +57,7 @@ end
 local function float_rule_for(id)
   if not float_rules[id] then
     float_rules[id] = hl.window_rule({
-      name    = "nv-desk-float-ws" .. id,
+      name    = "sk-desk-float-ws" .. id,
       match   = { workspace = tostring(id) },
       float   = true,
       size    = { "monitor_w*0.6", "monitor_h*0.62" },
@@ -121,7 +121,7 @@ function M.toggle()
   local id = ws.id
   if desk[id] then enter_tile(id) else enter_desk(id) end
   persist()
-  hl.dispatch(hl.dsp.event("nvmode," .. M.mode_of(id)))   -- socket2 (future socat use)
+  hl.dispatch(hl.dsp.event("skmode," .. M.mode_of(id)))   -- socket2 (future socat use)
   hl.exec_cmd("pkill -RTMIN+8 waybar")                    -- instant Waybar MODE refresh
 end
 

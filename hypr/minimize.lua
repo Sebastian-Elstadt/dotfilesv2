@@ -1,4 +1,4 @@
--- Night Vellum — MINIMIZE via special:minimized.
+-- Skemos — MINIMIZE via special:minimized.
 --
 -- The old 5-bind wiki trick (togglespecialworkspace + movetoworkspace +0 ...)
 -- broke on Hyprland 0.54+: restore flashes onto the active workspace then

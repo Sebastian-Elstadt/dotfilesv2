@@ -1,4 +1,4 @@
-// Night Vellum — halftone screen shader.
+// Skemos — halftone screen shader.
 // Wired in via decoration:screen_shader in hypr/look.lua.
 //
 // Static (no `time` uniform, so debug:damage_tracking stays ON, no GPU cost).

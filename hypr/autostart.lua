@@ -1,4 +1,4 @@
--- Night Vellum — autostart. Everything the desktop needs, nothing else.
+-- Skemos — autostart. Everything the desktop needs, nothing else.
 -- No browser, no second bar, no tray-spam.
 
 local HOME    = os.getenv("HOME")
@@ -25,7 +25,7 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("wl-paste --type text  --watch cliphist store")
   hl.exec_cmd("wl-paste --type image --watch cliphist store")
 
-  -- wallpaper daemon + Night Vellum schematic sheet (bare metal only)
+  -- wallpaper daemon + Skemos schematic sheet (bare metal only)
   if not VM then
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd(SCRIPTS .. "/wallpaper.sh")

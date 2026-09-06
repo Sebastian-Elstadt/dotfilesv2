@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Night Vellum — wallpaper generator + applier.
+# Skemos — wallpaper generator + applier.
 # Dark laid-paper grain + faint white schematic grid + crop/registration marks
 # and a corner title block. Reversed technical drawing. One image per
 # resolution, cached. Portable: reads the real monitor list from hyprctl.
@@ -7,11 +7,11 @@
 # Usage:
 #   wallpaper.sh                 generate (if missing) + apply to every monitor
 #   wallpaper.sh --force         regenerate even if cached, then apply
-#   wallpaper.sh --preview WxH   just write ~/.cache/night-vellum/preview.png
+#   wallpaper.sh --preview WxH   just write ~/.cache/skemos/preview.png
 
 set -euo pipefail
 
-CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/night-vellum"
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/skemos"
 mkdir -p "$CACHE"
 
 # --- palette (mirrors hypr/colors.lua) --------------------------------
@@ -52,15 +52,18 @@ gen() { # gen W H OUTFILE
     "$tmp/grid.png" -compose Over -composite \
     "$tmp/flat.png"
 
-  # 4. corner crop brackets + registration crosshairs (white / ink-dim)
-  local inset=30 len=64 reg=88
+  # 4. corner crop brackets + registration crosshairs (white / ink-dim).
+  # Top corners are pushed down TOPSHIFT px so the 22px waybar doesn't eat the
+  # top margin. Bottom-right is omitted — the title block lives there.
+  local inset=30 len=64 reg=88 topshift=24
   local brackets="" regs=""
-  for corner in "0 0 1 1" "$((w-1)) 0 -1 1" "0 $((h-1)) 1 -1" "$((w-1)) $((h-1)) -1 -1"; do
+  for corner in "0 0 1 1" "$((w-1)) 0 -1 1" "0 $((h-1)) 1 -1"; do
     read -r cx cy sx sy <<<"$corner"
-    local ax=$(( cx + sx*inset )) ay=$(( cy + sy*inset ))
+    local yoff=0; (( cy == 0 )) && yoff=$topshift
+    local ax=$(( cx + sx*inset )) ay=$(( cy + sy*inset + yoff ))
     brackets+=" line ${ax},${ay} $(( ax + sx*len )),${ay}"
     brackets+=" line ${ax},${ay} ${ax},$(( ay + sy*len ))"
-    local rx=$(( cx + sx*reg )) ry=$(( cy + sy*reg )) r=8
+    local rx=$(( cx + sx*reg )) ry=$(( cy + sy*reg + yoff )) r=8
     regs+=" circle ${rx},${ry} ${rx},$(( ry - r ))"
     regs+=" line $(( rx - r-4 )),${ry} $(( rx + r+4 )),${ry}"
     regs+=" line ${rx},$(( ry - r-4 )) ${rx},$(( ry + r+4 ))"
@@ -94,9 +97,9 @@ gen() { # gen W H OUTFILE
     -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$tb" \
     -stroke none -fill "$ACCENT" -draw "rectangle $((bx+bw-34)),$((by+30)) $((bx+bw-12)),$((by+52))" \
     ${FONT:+-font "$FONT"} -stroke none -fill "$INK" -pointsize 13 \
-      -draw "text $((bx+12)),$((by+16)) 'NIGHT VELLUM'" \
+      -draw "text $((bx+12)),$((by+16)) 'SKEMOS'" \
     -fill "$INK_DIM" -pointsize 10 \
-      -draw "text $((bx+12)),$((by+38)) 'DWG  NV-01'" \
+      -draw "text $((bx+12)),$((by+38)) 'DWG  SK-01'" \
       -draw "text $((bx+12)),$((by+54)) \"$sheet\"" \
     -strip -define png:compression-level=9 -define png:compression-filter=5 "$out"
 }

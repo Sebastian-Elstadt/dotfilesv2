@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Night Vellum — Waybar minimized-count module. Counts windows parked in
+# Skemos — Waybar minimized-count module. Counts windows parked in
 # special:minimized. Emits empty text when zero (module collapses via CSS).
 # minimize.lua sends SIGRTMIN+9 to waybar on minimize / restore / drawer toggle.
 

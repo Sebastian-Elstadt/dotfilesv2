@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Night Vellum — screenshots. Boring tools: grim + slurp + wl-clipboard.
+# Skemos — screenshots. Boring tools: grim + slurp + wl-clipboard.
 # Saves a PNG to ~/Pictures/Screenshots AND copies it to the clipboard.
 #
 #   screenshot.sh region   select a rectangle

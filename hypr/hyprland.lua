@@ -1,5 +1,5 @@
 -- ============================================================================
---  Night Vellum — Hyprland entrypoint
+--  Skemos — Hyprland entrypoint
 --  Dark-mode e-ink paper with a blueprint overlay.
 --  Config language: Lua (hyprlang is deprecated since Hyprland 0.55).
 --  Split into modules under ~/.config/hypr/ ; order below matters.

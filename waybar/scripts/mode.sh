@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Night Vellum — Waybar MODE module. Prints TILE or DESK for the ACTIVE
+# Skemos — Waybar MODE module. Prints TILE or DESK for the ACTIVE
 # workspace as one line of JSON. modes.lua persists the DESK set to the state
 # file below and sends SIGRTMIN+8 to waybar on every toggle.
 
 set -euo pipefail
-STATE="${XDG_STATE_HOME:-$HOME/.local/state}/night-vellum/desk-workspaces"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/skemos/desk-workspaces"
 
 id="$(hyprctl -j activeworkspace 2>/dev/null | jq -r '.id // empty')"
 if [ -z "$id" ]; then
