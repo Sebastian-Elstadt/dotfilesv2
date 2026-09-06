@@ -170,3 +170,21 @@ systemctl --user status hyprpolkitagent
 - `~/.bash_profile` uses `start-hyprland` (not `uwsm`).
 - Snapshots: there is no VirtualBox snapshot to fall back on. If root is Btrfs,
   consider `snapper`; otherwise rely on the git history of `~/.config`.
+
+---
+
+## 9 · Plugins — borders-plus-plus
+
+The per-window double rule (`hypr/plugins.lua`) needs one out-of-band install.
+Toolchain (`cmake meson ninja`) is in `packages.txt`.
+
+```sh
+hyprpm update                                              # builds against the running Hyprland
+hyprpm add https://github.com/hyprwm/hyprland-plugins
+hyprpm enable borders-plus-plus
+hyprctl reload
+```
+
+`autostart.lua` runs `hyprpm reload -n` on session start, so it persists. Until
+it's enabled, `plugins.lua` just logs `unknown config key 'plugin.borders_plus_plus.*'`
+— harmless. Rebuild after every Hyprland upgrade: `hyprpm update`.

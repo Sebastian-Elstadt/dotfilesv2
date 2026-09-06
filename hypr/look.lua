@@ -10,8 +10,8 @@ local HOME = os.getenv("HOME")
 hl.config({
   general = {
     border_size      = 1,
-    gaps_in          = 4,     -- TILE: tight
-    gaps_out         = 8,
+    gaps_in          = 6,     -- TILE: room for the borders-plus-plus outer rule
+    gaps_out         = 12,
     gaps_workspaces  = 0,
     layout           = "dwindle",
     resize_on_border = true,
