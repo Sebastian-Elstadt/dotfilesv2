@@ -84,12 +84,26 @@ Review it before running — it is the only privileged step.
 
 ## 4 · GPU
 
-- **AMD / Intel** — `mesa` (in the list) is all you need.
-- **NVIDIA** — before first launch, follow
-  <https://wiki.hypr.land/Nvidia/>: install `nvidia-open-dkms egl-wayland`
-  (uncomment them in `packages.txt`), set `nvidia_drm.modeset=1` in your kernel
-  cmdline, add the `nvidia nvidia_modeset nvidia_uvm nvidia_drm` modules to
-  `mkinitcpio.conf`, and add the env vars from that page. Expect friction.
+- **AMD / Intel only** — `mesa` (in the list) is all you need.
+- **NVIDIA** — reference <https://wiki.hypr.land/Nvidia/>. What `saber`
+  (RTX 5070, `nvidia-open` 610) actually runs, all confirmed working:
+
+  1. Packages: `mesa nvidia-open-dkms nvidia-utils linux-headers egl-wayland`
+     (`mesa` stays — the box also has an AMD iGPU).
+  2. Kernel cmdline: `nvidia_drm.modeset=1 nvidia.NVreg_PreserveVideoMemoryAllocations=1`
+  3. `/etc/mkinitcpio.conf`: `MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)`,
+     then `sudo mkinitcpio -P`.
+  4. `/etc/modprobe.d/nouveau-blacklist.conf` → `blacklist nouveau`
+     (the `kms` hook would otherwise pull nouveau into the initramfs).
+  5. **Suspend/resume** — without these the `PreserveVideoMemoryAllocations`
+     flag is a no-op and resume black-screens:
+     `sudo systemctl enable nvidia-suspend.service nvidia-resume.service nvidia-persistenced.service`
+  6. Multi-GPU render node is pinned in `hypr/hyprland.lua` via `AQ_DRM_DEVICES`
+     (NVIDIA card first, by stable PCI path). Adjust the PCI addresses if the
+     hardware differs — `lspci -k | grep -A2 VGA`.
+  7. `__GLX_VENDOR_LIBRARY_NAME=nvidia` is set in `hypr/hyprland.lua`. HW video
+     decode (`LIBVA_DRIVER_NAME`) is deliberately not set — the VAAPI bridge is
+     AUR-only; add `libva-nvidia-driver` yourself if you want it.
 
 ---
 

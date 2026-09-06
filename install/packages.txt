@@ -61,9 +61,12 @@ qt5-wayland
 qt6-wayland
 
 # --- CPU microcode: install the ONE matching your CPU (uncomment) ---
-# amd-ucode
+amd-ucode
 # intel-ucode
 
-# --- GPU: mesa covers AMD/Intel. NVIDIA needs extra setup — see INSTALL.md. ---
+# --- GPU ---------------------------------------------------------------------
+# mesa is always needed (GL loader + the AMD iGPU driver on this box).
 mesa
-# nvidia-open-dkms   linux-headers   egl-wayland   # only for NVIDIA
+# NVIDIA discrete card (RTX 5070). nvidia-open covers Turing+. See INSTALL.md §4
+# for the modeset / mkinitcpio / suspend-service / AQ_DRM_DEVICES steps.
+nvidia-open-dkms   linux-headers   egl-wayland

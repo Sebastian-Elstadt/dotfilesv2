@@ -5,6 +5,13 @@
 --  Split into modules under ~/.config/hypr/ ; order below matters.
 -- ============================================================================
 
+-- GPU: NVIDIA RTX 5070 (01:00.0) + AMD iGPU (12:00.0). The compositor boots on
+-- the NVIDIA card on its own here — no AQ_DRM_DEVICES needed. (Aquamarine's
+-- explicit device list rejects /dev/dri/by-path/* symlinks and crashes with
+-- "CBackend::create() failed!"; if pinning ever becomes necessary use plain
+-- node paths, e.g. AQ_DRM_DEVICES=/dev/dri/card1:/dev/dri/card0, and test it.)
+hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+
 require("colors")     -- palette (no side effects, just data)
 require("monitors")   -- outputs — generic, no hardcoded connector
 require("look")       -- rounding 0, border 1, no blur/shadow, anims off
