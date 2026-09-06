@@ -37,8 +37,8 @@ const float VIGNETTE     = 0.10;   // edge falloff; 0 = off
 // waybar; BOT keeps the frame off the very bottom so it reads as a deliberate
 // frame, not a clipped one. Brackets, frame and crosshairs are all relative to
 // this box.
-const float HUD_TOP     = 30.0;    // reserved at the top (waybar + breathing room)
-const float HUD_BOT     = 8.0;     // reserved at the bottom
+const float HUD_TOP     = 22.0;    // reserved at the top (waybar + breathing room)
+const float HUD_BOT     = 1.0;     // reserved at the bottom
 const float HUD_INSET   = 22.0;    // px from the box edge to bracket corner
 const float HUD_LEN     = 34.0;    // bracket arm length
 const float HUD_TH      = 2.0;     // bracket / crosshair line weight

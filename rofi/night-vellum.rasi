@@ -16,19 +16,23 @@
     font:             "Iosevka 11";
 }
 
+/* double rule: outer @nv-rule, a bg gap, inner @nv-faint hairline —
+   the technical frame that boxes a part on a schematic sheet */
 window {
     background-color: @nv-bg;
     border:           1px;
     border-color:     @nv-rule;
     border-radius:    0;
     width:            36em;
-    padding:          0;
+    padding:          5px;
     location:         center;
 }
 
 mainbox {
-    padding:  0;
-    children: [ inputbar, message, listview ];
+    border:       1px;
+    border-color: @nv-faint;
+    padding:      0;
+    children:     [ inputbar, message, listview ];
 }
 
 inputbar {

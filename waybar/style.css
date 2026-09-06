@@ -1,7 +1,7 @@
-/* Night Vellum — Waybar. The top edge of an engineering drawing sheet:
-   a hairline baseline with graduated ticks, cells divided by 1px rules,
-   corner brackets, and a stamped MODE title-block. One accent: burnt
-   drafting orange, only on state. Palette mirrors hypr/colors.lua. */
+/* Night Vellum — Waybar. A solid raised strip above the schematic field:
+   flat panel, hairline baseline, quiet cell dividers, one stamped MODE cell.
+   The screen-shader HUD owns the corner-bracket language; the bar stays calm.
+   Palette mirrors hypr/colors.lua. */
 
 @define-color bg        #161513;
 @define-color raised    #1e1d19;
@@ -20,15 +20,12 @@
   font-weight: 400;
 }
 
-/* baseline hairline + a 48px graduated tick strip along the bottom
-   (48px == the wallpaper's schematic grid pitch) */
+/* raised panel — a touch lighter than the field so it reads as solid and the
+   shader's shadow-weighted halftone barely touches it */
 window#waybar {
-  background:
-    repeating-linear-gradient(90deg, @ink-faint 0, @ink-faint 1px, transparent 1px, transparent 48px)
-      bottom / 100% 3px no-repeat,
-    @bg;
+  background: @raised;
   color: @ink-dim;
-  border-bottom: 1px solid @ink-faint;
+  border-bottom: 1px solid @rule;
 }
 
 tooltip {
@@ -38,8 +35,7 @@ tooltip {
 }
 tooltip label { color: @ink; }
 
-/* ---- every module is a cell: 1px rule on the left ------------------ */
-#custom-sheet,
+/* ---- cells: a quiet 1px divider on the left ---------------------- */
 #workspaces,
 #custom-mode,
 #window,
@@ -47,22 +43,16 @@ tooltip label { color: @ink; }
 #wireplumber,
 #tray,
 #clock {
-  padding: 0 10px;
-  box-shadow: inset 1px 0 0 @rule;      /* cell divider */
-}
-
-/* ---- left + right outer corner brackets -------------------------- */
-#custom-sheet {
   padding: 0 12px;
+  box-shadow: inset 1px 0 0 @rule;
+}
+#custom-sheet {
+  padding: 0 12px 0 14px;
   color: @ink-dim;
   letter-spacing: 2px;
-  box-shadow: inset 2px 0 0 @ink-faint, inset 0 -3px 0 @ink-faint;
-}
-#clock {
-  box-shadow: inset -2px 0 0 @ink-faint, inset 0 -3px 0 @ink-faint, inset 1px 0 0 @rule;
 }
 
-/* ---- workspaces: the coordinate row ----------------------------- */
+/* ---- workspaces: the coordinate row ---------------------------- */
 #workspaces { margin: 0; }
 #workspaces button {
   padding: 0 9px;
@@ -85,13 +75,13 @@ tooltip label { color: @ink; }
   box-shadow: inset 0 -1px @accent;
 }
 
-/* ---- MODE: a stamped title-block cell --------------------------- */
+/* ---- MODE: the one stamped cell -------------------------------- */
 #custom-mode {
-  margin: 3px 0 3px 0;
+  margin: 3px 0;
   padding: 0 12px;
   color: @accent;
   letter-spacing: 2px;
-  box-shadow: inset 0 0 0 1px @rule;     /* boxed on all four sides */
+  box-shadow: inset 0 0 0 1px @rule;
 }
 #custom-mode.desk {
   color: @bg;
@@ -99,15 +89,14 @@ tooltip label { color: @ink; }
   box-shadow: inset 0 0 0 1px @accent;
 }
 
-/* ---- centre: window title -------------------------------------- */
+/* ---- centre: window title ------------------------------------- */
 #window {
   color: @ink-dim;
-  padding: 0 14px;
   letter-spacing: 0.3px;
 }
 window#waybar.empty #window { color: @ink-faint; }
 
-/* ---- right side ---------------------------------------------- */
+/* ---- right side --------------------------------------------- */
 #custom-minimized {
   color: @accent;
   letter-spacing: 1px;

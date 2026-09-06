@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Night Vellum — wallpaper generator + applier.
-# Dark laid-paper grain + faint white schematic grid + crop/registration marks
-# and a corner title block. Reversed technical drawing. One image per
-# resolution, cached. Portable: reads the real monitor list from hyprctl.
+# Dark laid-paper grain + faint white schematic grid + a bottom-right title
+# block. Corner brackets / registration marks are the screen-shader HUD's job
+# now, not the wallpaper's. One image per resolution, cached. Portable: reads
+# the real monitor list from hyprctl.
 #
 # Usage:
 #   wallpaper.sh                 generate (if missing) + apply to every monitor
@@ -29,7 +30,7 @@ FONT="$(fc-match -f '%{file}' 'Iosevka' 2>/dev/null || true)"
 gen() { # gen W H OUTFILE
   local w=$1 h=$2 out=$3
   local tmp; tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
+  trap 'rm -rf "${tmp:-}"' RETURN
 
   # 1. schematic grid — 1px white hairline tile, knocked back
   magick -size "${GRID}x${GRID}" xc:none \
@@ -52,32 +53,12 @@ gen() { # gen W H OUTFILE
     "$tmp/grid.png" -compose Over -composite \
     "$tmp/flat.png"
 
-  # 4. corner crop brackets + registration crosshairs (white / ink-dim)
-  local inset=30 len=64 reg=88
-  local brackets="" regs=""
-  for corner in "0 0 1 1" "$((w-1)) 0 -1 1" "0 $((h-1)) 1 -1" "$((w-1)) $((h-1)) -1 -1"; do
-    read -r cx cy sx sy <<<"$corner"
-    local ax=$(( cx + sx*inset )) ay=$(( cy + sy*inset ))
-    brackets+=" line ${ax},${ay} $(( ax + sx*len )),${ay}"
-    brackets+=" line ${ax},${ay} ${ax},$(( ay + sy*len ))"
-    local rx=$(( cx + sx*reg )) ry=$(( cy + sy*reg )) r=8
-    regs+=" circle ${rx},${ry} ${rx},$(( ry - r ))"
-    regs+=" line $(( rx - r-4 )),${ry} $(( rx + r+4 )),${ry}"
-    regs+=" line ${rx},$(( ry - r-4 )) ${rx},$(( ry + r+4 ))"
-  done
+  # The corner brackets / registration marks / edge ticks that used to live here
+  # are now the screen-shader HUD's job (hypr/shaders/night-vellum.frag) — drawing
+  # them again in the wallpaper double-stamped every corner. The wallpaper is now
+  # just the paper field (grain + faint grid) plus the title block.
 
-  # 5. edge ticks — minor every GRID*2, major (longer) every GRID*8
-  local minor="" major=""
-  for (( x=GRID*2; x<w; x+=GRID*2 )); do
-    if (( x % (GRID*8) == 0 )); then major+=" line ${x},0 ${x},14  line ${x},$((h-1)) ${x},$((h-15))"
-    else                              minor+=" line ${x},0 ${x},7   line ${x},$((h-1)) ${x},$((h-8))"; fi
-  done
-  for (( y=GRID*2; y<h; y+=GRID*2 )); do
-    if (( y % (GRID*8) == 0 )); then major+=" line 0,${y} 14,${y}  line $((w-1)),${y} $((w-15)),${y}"
-    else                              minor+=" line 0,${y} 7,${y}   line $((w-1)),${y} $((w-8)),${y}"; fi
-  done
-
-  # 6. title block, bottom-right
+  # 4. title block, bottom-right
   local bw=232 bh=62
   local bx=$(( w - 24 - bw ))
   local by=$(( h - 24 - bh ))
@@ -87,10 +68,6 @@ gen() { # gen W H OUTFILE
   local sheet; sheet="$(date +%Y-%m-%d)"
 
   magick "$tmp/flat.png" \
-    -stroke "$INK"       -strokewidth 1 -fill none -draw "$brackets" \
-    -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$regs" \
-    -stroke "$INK_FAINT" -strokewidth 1 -fill none -draw "$minor" \
-    -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$major" \
     -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$tb" \
     -stroke none -fill "$ACCENT" -draw "rectangle $((bx+bw-34)),$((by+30)) $((bx+bw-12)),$((by+52))" \
     ${FONT:+-font "$FONT"} -stroke none -fill "$INK" -pointsize 13 \
