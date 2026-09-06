@@ -11,7 +11,7 @@
 
   "modules-left":   ["custom/sheet", "hyprland/workspaces", "custom/mode"],
   "modules-center": ["hyprland/window"],
-  "modules-right":  ["custom/minimized", "wireplumber", "tray", "clock"],
+  "modules-right":  ["custom/minimized", "cpu", "memory", "custom/temp", "network", "wireplumber", "clock"],
 
   // static drawing-number stamp, left of the coordinate row
   "custom/sheet": {
@@ -53,6 +53,30 @@
     "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"minimized\")'"
   },
 
+  // --- telemetry cluster -------------------------------------------------
+  "cpu": {
+    "format": "CPU {usage}%",
+    "interval": 3,
+    "tooltip": false
+  },
+  "memory": {
+    "format": "MEM {percentage}%",
+    "interval": 5,
+    "tooltip-format": "{used:0.1f} / {total:0.1f} GiB"
+  },
+  "custom/temp": {
+    "exec": "~/.config/waybar/scripts/temp.sh",
+    "return-type": "json",
+    "interval": 5
+  },
+  "network": {
+    "format-ethernet": "NET {bandwidthDownBytes}",
+    "format-wifi": "NET {signalStrength}",
+    "format-disconnected": "NET ✕",
+    "interval": 3,
+    "tooltip-format": "{ifname}  {ipaddr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}"
+  },
+
   "wireplumber": {
     "format": "SND {volume}",
     "format-muted": "SND ✕",
@@ -61,11 +85,6 @@
     "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-",
     "max-volume": 100,
     "tooltip": false
-  },
-
-  "tray": {
-    "spacing": 8,
-    "icon-size": 14
   },
 
   "clock": {

@@ -125,4 +125,4 @@ hl.animation({ leaf = "borderangle",      enabled = false })
 -- workspaces / drawer / layers: panels swap with a short slide + fade
 hl.animation({ leaf = "workspaces",       enabled = true,  speed = 8,  bezier = "skOut", style = "slidefade 12%" })
 hl.animation({ leaf = "specialWorkspace", enabled = true,  speed = 9,  bezier = "skOut", style = "slidevert" })
-hl.animation({ leaf = "layers",           enabled = true,  speed = 9,  bezier = "skOut", style = "slidefade 8%" })
+hl.animation({ leaf = "layers",           enabled = true,  speed = 12, bezier = "skOut", style = "slidefade 8%" })

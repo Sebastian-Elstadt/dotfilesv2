@@ -40,8 +40,11 @@ tooltip label { color: @ink; }
 #custom-mode,
 #window,
 #custom-minimized,
+#cpu,
+#memory,
+#custom-temp,
+#network,
 #wireplumber,
-#tray,
 #clock {
   padding: 0 12px;
   box-shadow: inset 1px 0 0 @rule;
@@ -106,12 +109,16 @@ window#waybar.empty #window { color: @ink-faint; }
   box-shadow: none;
 }
 
+/* ---- telemetry cluster ------------------------------------- */
+#cpu,
+#memory,
+#custom-temp,
+#network { color: @ink-dim; letter-spacing: 0.5px; }
+#custom-temp.hot { color: @accent; }
+#network.disconnected { color: @accent; }
+
 #wireplumber { color: @ink-dim; }
 #wireplumber.muted { color: @accent; }
-
-#tray { padding: 0 8px; }
-#tray > .passive { -gtk-icon-effect: dim; }
-#tray > .needs-attention { -gtk-icon-effect: highlight; }
 
 #clock {
   color: @ink;
