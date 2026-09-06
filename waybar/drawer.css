@@ -1,0 +1,22 @@
+/* Skemos — "PROGRAM DRAWER" banner. Thin orange strip along the bottom edge.
+   Deliberately the one high-contrast surface: you always know when you're
+   looking at the drawer and not a real workspace. Palette mirrors colors.lua. */
+
+* {
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  font-family: "Iosevka", "Iosevka Nerd Font", monospace;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+window#waybar {
+  background: #c1663a;      /* accent — burnt orange */
+  color: #161513;           /* bg ink — near-black text on the orange */
+}
+
+#custom-label {
+  padding: 1px 16px 0 16px;
+  letter-spacing: 4px;
+}

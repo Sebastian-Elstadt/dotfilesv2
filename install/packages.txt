@@ -52,6 +52,7 @@ git
 
 # --- small CLI helpers used by the config ---
 jq
+openbsd-netcat                # `nc -U` — reads Hyprland's socket2 for the drawer banner
 libnotify                     # notify-send
 brightnessctl                 # backlight keys (now functional on a real panel)
 playerctl                     # media keys (optional)

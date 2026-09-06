@@ -44,6 +44,10 @@ hl.on("hyprland.start", function()
   -- bar
   hl.exec_cmd("waybar")
 
+  -- orange "PROGRAM DRAWER" banner: shown along the bottom whenever the
+  -- minimize drawer (special:minimized) is on screen. Follows socket2 events.
+  hl.exec_cmd(SCRIPTS .. "/drawer-banner.sh")
+
   -- idle daemon (dim -> lock -> dpms)
   hl.exec_cmd("hypridle")
 end)

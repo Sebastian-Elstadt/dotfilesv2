@@ -45,11 +45,11 @@ bare-metal setup guide; this is "where we are and why".
 | `look.lua` | borders, gaps, `decoration:screen_shader`, **animations** (curves `skLinear/skOut/skSnap/skGone`, per-leaf speeds) |
 | `rules.lua` | window rules; floating-only shadow; **rofi layer rule** (`slide`) |
 | `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R`, window switcher `SUPER+W` (`scripts/window-switch.sh` — `hyprctl clients` → rofi `-dmenu` → `focuswindow`) |
-| `modes.lua` | per-workspace **TILE ⇄ DESK** toggle (`SUPER+SHIFT+SPACE`), persisted to `~/.local/state/skemos/` |
-| `minimize.lua` | `special:minimized` drawer (`SUPER+M` / `SUPER+SHIFT+M`) |
-| `autostart.lua` | **`lock.sh` first** (boot comes up locked — the schematic hyprlock screen is the boot login), then waybar, hyprpaper+wallpaper, mako, hypridle, polkit, cliphist. VM-detect branch still present. |
+| `modes.lua` | per-workspace **TILE ⇄ DESK** toggle (`SUPER+SHIFT+SPACE`), persisted to `~/.local/state/skemos/`. Bails with a notify if the focused window is in the drawer (its real ws is *under* the drawer — a blind toggle would reshuffle that). |
+| `minimize.lua` | `special:minimized` drawer (`SUPER+M` minimize / restore, `SUPER+SHIFT+M` show-hide). Restore uses `hl.get_active_workspace()`, which correctly returns the real ws under the drawer — verified, not buggy. |
+| `autostart.lua` | **`lock.sh` first** (boot comes up locked — the schematic hyprlock screen is the boot login), then waybar, **`drawer-banner.sh`**, hyprpaper+wallpaper, mako, hypridle, polkit, cliphist. VM-detect branch still present. |
 
-Other: `waybar/` (config.jsonc + style.css + scripts), `rofi/skemos.rasi`,
+Other: `waybar/` (config.jsonc + style.css + scripts; **`drawer.jsonc` + `drawer.css`** = the bottom drawer banner), `rofi/skemos.rasi`,
 `mako/config`, `hypr/hyprlock.conf`, `hypr/shaders/skemos.frag`,
 `hypr/scripts/wallpaper.sh`, `kitty/skemos.conf` + `foot/foot.ini`.
 
@@ -84,6 +84,15 @@ Other: `waybar/` (config.jsonc + style.css + scripts), `rofi/skemos.rasi`,
 - **rofi** (`skemos.rasi`): full-height right-side **panel**, inset 12 px
   top/right/bottom (matches window gap), slides in from the right (`sk-rofi-slide`
   layer rule + `layers` animation speed 12).
+- **Minimize drawer** (`special:minimized`): windows keep their float state going
+  in, so a floating window stays floating in the drawer while tiled ones tile
+  (dwindle) with the roomy `gaps_out = 44` from `rules.lua`. While the drawer is
+  on screen, `scripts/drawer-banner.sh` shows a thin **orange "PROGRAM DRAWER"
+  strip** along the bottom (a second minimal Waybar, `layer=top`,
+  `exclusive=false`, `passthrough=true`). The script follows Hyprland's socket2
+  `activespecial>>…` events via `nc -U` (needs `openbsd-netcat`), so the banner
+  tracks reality — including the drawer auto-closing when its last window is
+  restored.
 - **mako**: callout cards, `▸` marker (matches rofi prompt), inset from the
   top-right so it clears... (bracket now gone, but the inset is fine).
 - **Boot login**: no display manager. `agetty` autologins `bas` on tty1

@@ -1,0 +1,20 @@
+// Skemos — the "PROGRAM DRAWER" banner. A second, minimal Waybar pinned to the
+// bottom edge, shown only while the minimize drawer (special:minimized) is on
+// screen. hypr/scripts/drawer-banner.sh starts/stops it from Hyprland's
+// socket2 events. Orange ground, ink text — the one loud surface in the rice.
+{
+  "layer": "top",
+  "position": "bottom",
+  "height": 16,
+  "exclusive": false,      // overlay: don't reserve space / reflow tiling
+  "passthrough": true,     // clicks fall through to whatever's beneath
+  "spacing": 0,
+  "modules-center": ["custom/label"],
+
+  "custom/label": {
+    "exec": "echo 'PROGRAM DRAWER      SUPER+M restore      SUPER+SHIFT+M hide'",
+    "interval": "once",
+    "format": "{}",
+    "tooltip": false
+  }
+}

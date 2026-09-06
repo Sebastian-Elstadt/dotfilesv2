@@ -116,6 +116,17 @@ end
 function M.mode_of(id) return desk[id] and "DESK" or "TILE" end
 
 function M.toggle()
+  -- Focused window sitting in the minimize drawer? TILE/DESK is a property of a
+  -- real workspace, and hl.get_active_workspace() reports the one *under* the
+  -- drawer — so a blind toggle here would silently reshuffle the workspace
+  -- behind the drawer. Bail with a hint instead.
+  local aw = hl.get_active_window()
+  if aw and aw.workspace and tostring(aw.workspace.name):match("^special:") then
+    hl.exec_cmd("notify-send -t 2500 -a Skemos 'Drawer window focused' "
+      .. "'TILE / DESK applies to a real workspace. Restore this window first (SUPER+M).'")
+    return
+  end
+
   local ws = hl.get_active_workspace()
   if not ws or ws.special then return end   -- ignore special workspaces
   local id = ws.id
