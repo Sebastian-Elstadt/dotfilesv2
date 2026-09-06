@@ -5,6 +5,8 @@
 
 local c = require("colors")
 
+local HOME = os.getenv("HOME")
+
 hl.config({
   general = {
     border_size      = 1,
@@ -40,6 +42,10 @@ hl.config({
     shadow = { enabled = false },   -- rules.lua re-enables a hairline for floating only
     glow        = { enabled = false },
     motion_blur = { enabled = false },
+
+    -- Schematic HUD + halftone. Static shader (no `time`), so damage tracking
+    -- stays on. See hypr/shaders/night-vellum.frag for the tunables.
+    screen_shader = HOME .. "/.config/hypr/shaders/night-vellum.frag",
   },
 
   dwindle = {
@@ -85,21 +91,36 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
--- ---- Motion: one 90ms linear fade, nothing else ---------------------------
--- `linear` bezier is built in. speed ~11 ≈ 90ms.
+-- ---- Motion: fast schematic-instrument, not e-ink smear -------------------
+-- Everything is short (~90-140ms) with a hard decel. The halftone shader turns
+-- the quick fades into a stipple "dissolve". Focus changes snap the border like
+-- a reticle locking on. Tiled windows still teleport (no windowsMove).
 hl.config({ animations = { enabled = true } })
 
-hl.animation({ leaf = "global",       enabled = true,  speed = 11, bezier = "linear" })
--- windows: appear/disappear at full size (no scale), opacity handled by fade*
-hl.animation({ leaf = "windows",      enabled = true,  speed = 11, bezier = "linear", style = "popin 100%" })
-hl.animation({ leaf = "windowsIn",    enabled = true,  speed = 11, bezier = "linear", style = "popin 100%" })
-hl.animation({ leaf = "windowsOut",   enabled = true,  speed = 11, bezier = "linear", style = "popin 100%" })
-hl.animation({ leaf = "windowsMove",  enabled = false })              -- tiles/floats snap
-hl.animation({ leaf = "fade",         enabled = true,  speed = 11, bezier = "linear" })
-hl.animation({ leaf = "fadeIn",       enabled = true,  speed = 11, bezier = "linear" })
-hl.animation({ leaf = "fadeOut",      enabled = true,  speed = 11, bezier = "linear" })
-hl.animation({ leaf = "border",       enabled = false })              -- focus change is instant
-hl.animation({ leaf = "borderangle",  enabled = false })
-hl.animation({ leaf = "workspaces",   enabled = true,  speed = 11, bezier = "linear", style = "fade" })
-hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 11, bezier = "linear", style = "fade" })
-hl.animation({ leaf = "layers",       enabled = true,  speed = 11, bezier = "linear", style = "fade" })
+hl.curve("nvLinear", { type = "bezier", points = { { 0.0,  0.0 }, { 1.0, 1.0 } } })
+hl.curve("nvOut",    { type = "bezier", points = { { 0.12, 0.9 }, { 0.2, 1.0 } } })  -- snap-to-rest
+hl.curve("nvSnap",   { type = "bezier", points = { { 0.3,  0.0 }, { 0.1, 1.0 } } })  -- near-instant
+hl.curve("nvGone",   { type = "bezier", points = { { 0.05, 0.9 }, { 0.15, 1.0 } } })  -- front-loaded cut
+
+hl.animation({ leaf = "global",          enabled = true,  speed = 8,  bezier = "nvOut" })
+
+-- windows: a hair of assemble (popin 96%) under a fast fade -> "materialise".
+-- close is near-instant: front-loaded curve + high speed, more cut than fade.
+hl.animation({ leaf = "windows",          enabled = true,  speed = 9,  bezier = "nvOut",  style = "popin 96%" })
+hl.animation({ leaf = "windowsIn",        enabled = true,  speed = 9,  bezier = "nvOut",  style = "popin 96%" })
+hl.animation({ leaf = "windowsOut",       enabled = true,  speed = 20, bezier = "nvGone", style = "popin 98%" })
+hl.animation({ leaf = "windowsMove",      enabled = false })                       -- tiles/floats teleport
+
+-- fade: the core of the dissolve
+hl.animation({ leaf = "fade",             enabled = true,  speed = 9,  bezier = "nvLinear" })
+hl.animation({ leaf = "fadeIn",           enabled = true,  speed = 9,  bezier = "nvLinear" })
+hl.animation({ leaf = "fadeOut",          enabled = true,  speed = 20, bezier = "nvGone" })
+
+-- border: reticle lock on focus change
+hl.animation({ leaf = "border",           enabled = true,  speed = 7,  bezier = "nvSnap" })
+hl.animation({ leaf = "borderangle",      enabled = false })
+
+-- workspaces / drawer / layers: panels swap with a short slide + fade
+hl.animation({ leaf = "workspaces",       enabled = true,  speed = 8,  bezier = "nvOut", style = "slidefade 12%" })
+hl.animation({ leaf = "specialWorkspace", enabled = true,  speed = 9,  bezier = "nvOut", style = "slidevert" })
+hl.animation({ leaf = "layers",           enabled = true,  speed = 9,  bezier = "nvOut", style = "slidefade 8%" })
