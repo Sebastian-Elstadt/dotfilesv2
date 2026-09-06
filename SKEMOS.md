@@ -86,14 +86,15 @@ Other: `waybar/` (config.jsonc + style.css + scripts), `rofi/skemos.rasi`,
   layer rule + `layers` animation speed 12).
 - **mako**: callout cards, `▸` marker (matches rofi prompt), inset from the
   top-right so it clears... (bracket now gone, but the inset is fine).
-- **hyprlock**: solid field + corner brackets from small solid rects
-  (hyprlock `shape` borders render filled — hyprwm/hyprlock#458), `SK-01` tag.
+- **hyprlock**: solid field + 4 corner brackets, each arm a solid rect anchored
+  `halign/valign = center` with a hardcoded offset from the 2560×1440 centre
+  (per-edge halign/valign is buggy — #516/#744; `shape` borders render filled —
+  #458). `SK-01` + `SKEMOS` tags. Test/preview with
+  `hyprlock --grace 999 --verbose` then `grim` then `pkill hyprlock`.
 
 ## Open / next
 
 - Cheat-sheet on `SUPER+/` rendered as a schematic sheet (offered, not built).
-- `hypr/hyprlock.conf` corner-bracket positions never verified on a real lock
-  (couldn't screenshot a locker) — check with `SUPER+L`.
 - Suspend/resume cycle test.
 - Possible waybar adds: media (`playerctl`), power menu, bluetooth, disk, update
   count.
