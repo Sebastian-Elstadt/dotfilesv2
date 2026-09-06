@@ -46,6 +46,7 @@ bare-metal setup guide; this is "where we are and why".
 | `rules.lua` | window rules; floating-only shadow; **rofi layer rule** (`slide`) |
 | `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R`, window switcher `SUPER+W` (`scripts/window-switch.sh` — `hyprctl clients` → rofi `-dmenu` → `focuswindow`) |
 | `modes.lua` | per-workspace **TILE ⇄ DESK** toggle (`SUPER+SHIFT+SPACE`), persisted to `~/.local/state/skemos/`. Bails with a notify if the focused window is in the drawer (its real ws is *under* the drawer — a blind toggle would reshuffle that). |
+| `alttab.lua` | **`ALT+TAB` / `ALT+SHIFT+TAB`** — walk windows in MRU order (`hl.get_windows()` sorted by `focus_history_id`). Snapshots the order per run; a run goes stale after 2 s or an outside focus change. Skips `special:*`. `require`d for side effects in `binds.lua`. |
 | `minimize.lua` | `special:minimized` drawer (`SUPER+M` minimize / restore, `SUPER+SHIFT+M` show-hide). Restore uses `hl.get_active_workspace()`, which correctly returns the real ws under the drawer — verified, not buggy. |
 | `autostart.lua` | **`lock.sh` first** (boot comes up locked — the schematic hyprlock screen is the boot login), then waybar, **`drawer-banner.sh`**, hyprpaper+wallpaper, mako, hypridle, polkit, cliphist. VM-detect branch still present. |
 

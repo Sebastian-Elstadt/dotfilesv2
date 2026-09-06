@@ -2,6 +2,7 @@
 
 local modes    = require("modes")
 local minimize = require("minimize")
+require("alttab")   -- ALT+TAB / ALT+SHIFT+TAB — MRU window walk
 
 local mod   = "SUPER"
 local HOME  = os.getenv("HOME")

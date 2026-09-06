@@ -179,6 +179,7 @@ systemctl --user status hyprpolkitagent
 |---|---|
 | `SUPER`+`Q` (or `Return`) | terminal · `SUPER`+`D` / `SUPER`+`R` rofi · `SUPER`+`C` close |
 | `SUPER`+`W` | window switcher — search all windows on all workspaces, jump to one |
+| `ALT`+`TAB` / `ALT`+`SHIFT`+`TAB` | walk windows in most-recently-used order (tap to go further) |
 | `SUPER`+`SHIFT`+`SPACE` | toggle TILE ↔ DESK on the current workspace |
 | `SUPER`+`SPACE` | float / tile the active window |
 | `SUPER`+`M` / `SUPER`+`SHIFT`+`M` | minimize to drawer / toggle drawer |
