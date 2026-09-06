@@ -80,6 +80,30 @@ NetworkManager, rebuilds the font cache, and appends the Hyprland launch line to
 `~/.bash_profile`. It never touches disks, the ESP, the bootloader, or autologin.
 Review it before running — it is the only privileged step.
 
+### Boot straight into the schematic lock screen
+
+There is no display manager. By default boot lands on the bare `agetty` text
+prompt; you log in and `~/.bash_profile` starts Hyprland. To instead see the
+`hyprlock` screen (the `SUPER+L` look) as the boot login, autologin `bas` on
+tty1 and let Hyprland come up locked — `autostart.lua` runs `lock.sh` first, so
+the schematic screen with its password field is the first thing on screen.
+
+```sh
+sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/usr/bin/agetty --autologin bas --noclear %I $TERM
+EOF
+sudo systemctl daemon-reload
+```
+
+Trade-off: the console itself no longer asks for a password, so physical access
+= a shell in the ~1 s before `hyprlock` paints, and a logged-in tty1 if Hyprland
+ever fails to start. Acceptable on a personal box without disk encryption; if
+that matters, skip this and keep the text login. To undo:
+`sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf && sudo systemctl daemon-reload`.
+
 ---
 
 ## 4 · GPU
@@ -132,6 +156,9 @@ Hyprland --verify-config      # expect: config ok
 
 Log out of the TTY and log back in — `~/.bash_profile` runs `start-hyprland`.
 (To start manually instead, comment that block out and run `start-hyprland`.)
+With the tty1 autologin drop-in from §3 in place, a reboot goes straight to the
+`hyprlock` screen; without it you get the text login first, then the same
+`hyprlock` gate once Hyprland starts.
 
 You should get: the schematic-sheet wallpaper (first generation takes a few
 seconds), the thin top bar, `SUPER+Return` → foot, `SUPER+D` / `SUPER+R` → rofi.

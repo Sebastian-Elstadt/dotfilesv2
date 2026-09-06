@@ -15,6 +15,16 @@ end
 local VM = in_vm()
 
 hl.on("hyprland.start", function()
+  -- login gate — bring the session up already locked, so the schematic
+  -- hyprlock screen is the first thing shown at boot instead of the bare
+  -- agetty text prompt. agetty autologins `bas` on tty1 (no password at the
+  -- console) -> ~/.bash_profile -> start-hyprland -> this. Same screen and
+  -- same password prompt as SUPER+L; lock.sh's watchdog fails it open if
+  -- hyprlock ever dies. Requires the getty@tty1 autologin drop-in (INSTALL
+  -- §3); without it you just get the normal text login and this is a no-op
+  -- lock you dismiss with your password anyway.
+  hl.exec_cmd(SCRIPTS .. "/lock.sh")
+
   -- polkit auth agent (GUI privilege prompts)
   hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
 

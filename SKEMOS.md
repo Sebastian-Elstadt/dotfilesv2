@@ -47,7 +47,7 @@ bare-metal setup guide; this is "where we are and why".
 | `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R` |
 | `modes.lua` | per-workspace **TILE ⇄ DESK** toggle (`SUPER+SHIFT+SPACE`), persisted to `~/.local/state/skemos/` |
 | `minimize.lua` | `special:minimized` drawer (`SUPER+M` / `SUPER+SHIFT+M`) |
-| `autostart.lua` | waybar, hyprpaper+wallpaper, mako, hypridle, polkit, cliphist. VM-detect branch still present. |
+| `autostart.lua` | **`lock.sh` first** (boot comes up locked — the schematic hyprlock screen is the boot login), then waybar, hyprpaper+wallpaper, mako, hypridle, polkit, cliphist. VM-detect branch still present. |
 
 Other: `waybar/` (config.jsonc + style.css + scripts), `rofi/skemos.rasi`,
 `mako/config`, `hypr/hyprlock.conf`, `hypr/shaders/skemos.frag`,
@@ -86,6 +86,11 @@ Other: `waybar/` (config.jsonc + style.css + scripts), `rofi/skemos.rasi`,
   layer rule + `layers` animation speed 12).
 - **mako**: callout cards, `▸` marker (matches rofi prompt), inset from the
   top-right so it clears... (bracket now gone, but the inset is fine).
+- **Boot login**: no display manager. `agetty` autologins `bas` on tty1
+  (drop-in `/etc/systemd/system/getty@tty1.service.d/autologin.conf`, INSTALL §3,
+  NOT in the repo) -> `~/.bash_profile` -> `start-hyprland` -> `autostart.lua`
+  runs `lock.sh` first, so the schematic hyprlock screen is the boot login. Undo
+  the drop-in to get the plain text login back (the lock still gates either way).
 - **hyprlock**: solid field + 4 corner brackets, each arm a solid rect anchored
   `halign/valign = center` with a hardcoded offset from the 2560×1440 centre
   (per-edge halign/valign is buggy — #516/#744; `shape` borders render filled —
