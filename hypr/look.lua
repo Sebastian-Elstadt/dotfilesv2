@@ -9,9 +9,9 @@ local HOME = os.getenv("HOME")
 
 hl.config({
   general = {
-    border_size      = 1,
-    gaps_in          = 5,     -- TILE: tight, + 1px for the borders-plus-plus rule
-    gaps_out         = { top = 3, right = 10, bottom = 10, left = 10 },  -- tiny top gap: no wallpaper seam under the bar
+    border_size      = 2,     -- one border only: white active, faint inactive
+    gaps_in          = 4,     -- TILE: tight
+    gaps_out         = 10,    -- equal on every side, incl. under the waybar
     gaps_workspaces  = 0,
     layout           = "dwindle",
     resize_on_border = true,
@@ -116,8 +116,9 @@ hl.animation({ leaf = "fade",             enabled = true,  speed = 9,  bezier = 
 hl.animation({ leaf = "fadeIn",           enabled = true,  speed = 9,  bezier = "nvLinear" })
 hl.animation({ leaf = "fadeOut",          enabled = true,  speed = 20, bezier = "nvGone" })
 
--- border: reticle lock on focus change
-hl.animation({ leaf = "border",           enabled = true,  speed = 7,  bezier = "nvSnap" })
+-- border: focus colour change is instant (no half-faded border lingering on a
+-- workspace switch); angle animation off
+hl.animation({ leaf = "border",           enabled = false })
 hl.animation({ leaf = "borderangle",      enabled = false })
 
 -- workspaces / drawer / layers: panels swap with a short slide + fade

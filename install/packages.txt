@@ -50,11 +50,6 @@ networkmanager
 polkit
 git
 
-# --- hyprpm plugin toolchain (borders-plus-plus; see INSTALL.md) ---
-cmake
-meson
-ninja
-
 # --- small CLI helpers used by the config ---
 jq
 libnotify                     # notify-send

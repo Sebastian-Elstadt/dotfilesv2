@@ -173,18 +173,17 @@ systemctl --user status hyprpolkitagent
 
 ---
 
-## 9 · Plugins — borders-plus-plus
+## 9 · Plugins
 
-The per-window double rule (`hypr/plugins.lua`) needs one out-of-band install.
-Toolchain (`cmake meson ninja`) is in `packages.txt`.
+None. `borders-plus-plus` was tried (v1.0 only exposes one extra border, drawn
+adjacent to the native one — no gap, no corner brackets) and dropped: it just
+stacked a second border on every window and its plugin-drawn border didn't fade
+with the window on a workspace switch. Window framing is native now
+(`border_size = 2`, white active / faint inactive in `look.lua`).
+
+If it was enabled on this machine, undo it:
 
 ```sh
-hyprpm update                                              # builds against the running Hyprland
-hyprpm add https://github.com/hyprwm/hyprland-plugins
-hyprpm enable borders-plus-plus
-hyprctl reload
+hyprpm disable borders-plus-plus
+hyprpm remove hyprland-plugins     # optional
 ```
-
-`autostart.lua` runs `hyprpm reload -n` on session start, so it persists. Until
-it's enabled, `plugins.lua` just logs `unknown config key 'plugin.borders_plus_plus.*'`
-— harmless. Rebuild after every Hyprland upgrade: `hyprpm update`.

@@ -15,9 +15,6 @@ end
 local VM = in_vm()
 
 hl.on("hyprland.start", function()
-  -- load enabled hyprpm plugins (borders-plus-plus); harmless if none
-  hl.exec_cmd("hyprpm reload -n")
-
   -- polkit auth agent (GUI privilege prompts)
   hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
 

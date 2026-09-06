@@ -16,6 +16,5 @@ require("colors")     -- palette (no side effects, just data)
 require("monitors")   -- outputs — generic, no hardcoded connector
 require("look")       -- rounding 0, border 1, HUD shader, fast motion
 require("rules")      -- window/workspace rules; floating-only umbra (AFTER look)
-pcall(require, "plugins")  -- borders-plus-plus config; no-op until hyprpm enables it
 require("binds")      -- keybindings (pulls in modes + minimize)
 require("autostart")  -- waybar, hyprpaper, mako, hypridle, polkit, cliphist
