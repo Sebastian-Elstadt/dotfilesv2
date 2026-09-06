@@ -150,7 +150,7 @@ systemctl --user status hyprpolkitagent
 
 | Bind | Action |
 |---|---|
-| `SUPER`+`Return` | terminal · `SUPER`+`D` / `SUPER`+`R` rofi · `SUPER`+`Q` close |
+| `SUPER`+`Q` (or `Return`) | terminal · `SUPER`+`D` / `SUPER`+`R` rofi · `SUPER`+`C` close |
 | `SUPER`+`SHIFT`+`SPACE` | toggle TILE ↔ DESK on the current workspace |
 | `SUPER`+`SPACE` | float / tile the active window |
 | `SUPER`+`M` / `SUPER`+`SHIFT`+`M` | minimize to drawer / toggle drawer |

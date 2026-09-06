@@ -1,30 +1,33 @@
-# Night Vellum — mako. Raised paper card, 1px rule border, squared.
+# Night Vellum — mako. Raised callout card, hairline frame, squared. Sits clear
+# of the screen-shader HUD's top-right bracket.
 
 font=Iosevka 10
 background-color=#1e1d19
 text-color=#e5e1d6
-border-color=#34322d
+border-color=#55514a
 progress-color=over #c1663a
 border-size=1
 border-radius=0
-padding=8,12
-margin=8
-outer-margin=6
+padding=10,14
+margin=52,44
+outer-margin=8
 default-timeout=6000
 ignore-timeout=0
 max-visible=4
-width=340
-height=160
+width=360
+height=170
 layer=overlay
 anchor=top-right
 icons=0
 markup=1
-format=<b>%s</b>\n%b
+format=<span color="#c1663a">▸</span> <b>%s</b>\n<span color="#9a948a">%b</span>
 
 [urgency=low]
 text-color=#9a948a
+format=<span color="#55514a">▸</span> %s\n<span color="#9a948a">%b</span>
 
 [urgency=high]
 border-color=#c1663a
 text-color=#e5e1d6
 default-timeout=0
+format=<span color="#c1663a">▸ %s</span>\n%b

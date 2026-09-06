@@ -47,9 +47,9 @@ const float FRAME_TH    = 1.0;
 const float REG_LEN     = 9.0;     // registration crosshair arm length
 const float REG_INSET   = 30.0;    // crosshair distance from edge
 
-const float HUD_A   = 0.60;        // bracket opacity
-const float FRAME_A = 0.45;        // frame opacity
-const float REG_A   = 0.55;        // crosshair opacity
+const float HUD_A   = 0.0;        // bracket opacity // 0.6
+const float FRAME_A = 0.0;        // frame opacity // 0.45
+const float REG_A   = 0.55;        // crosshair opacity // 0.55
 
 // ---- helpers ------------------------------------------------------------
 float seg(float a, float lo, float hi) { return step(lo, a) * step(a, hi); }
