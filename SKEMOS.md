@@ -44,7 +44,7 @@ bare-metal setup guide; this is "where we are and why".
 | `monitors.lua` | generic wildcard output rule |
 | `look.lua` | borders, gaps, `decoration:screen_shader`, **animations** (curves `skLinear/skOut/skSnap/skGone`, per-leaf speeds) |
 | `rules.lua` | window rules; floating-only shadow; **rofi layer rule** (`slide`) |
-| `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R` |
+| `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R`, window switcher `SUPER+W` (`scripts/window-switch.sh` — `hyprctl clients` → rofi `-dmenu` → `focuswindow`) |
 | `modes.lua` | per-workspace **TILE ⇄ DESK** toggle (`SUPER+SHIFT+SPACE`), persisted to `~/.local/state/skemos/` |
 | `minimize.lua` | `special:minimized` drawer (`SUPER+M` / `SUPER+SHIFT+M`) |
 | `autostart.lua` | **`lock.sh` first** (boot comes up locked — the schematic hyprlock screen is the boot login), then waybar, hyprpaper+wallpaper, mako, hypridle, polkit, cliphist. VM-detect branch still present. |

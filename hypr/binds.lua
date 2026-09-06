@@ -17,6 +17,7 @@ hl.bind(mod .. " + Return",         hl.dsp.exec_cmd(terminal))   -- alias (Hyprl
 hl.bind(mod .. " + D",              hl.dsp.exec_cmd(launcher))   -- spec bind
 hl.bind(mod .. " + R",              hl.dsp.exec_cmd(launcher))   -- alias
 hl.bind(mod .. " + C",              hl.dsp.window.close())
+hl.bind(mod .. " + W",              hl.dsp.exec_cmd(SCRIPTS .. "/window-switch.sh"))  -- search all windows, jump to one
 hl.bind(mod .. " + SHIFT + SPACE",  function() modes.toggle() end)      -- TILE <-> DESK, this workspace only
 hl.bind(mod .. " + SPACE",          hl.dsp.window.float({ action = "toggle" }))  -- float/tile active window only
 hl.bind(mod .. " + M",              function() minimize.minimize() end)
