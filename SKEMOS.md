@@ -94,6 +94,13 @@ Other: `waybar/` (config.jsonc + style.css + scripts; **`drawer.jsonc` + `drawer
   `activespecial>>…` events via `nc -U` (needs `openbsd-netcat`), so the banner
   tracks reality — including the drawer auto-closing when its last window is
   restored.
+- **App theme = dark**: no DE, so `autostart.lua` sets the GNOME
+  `color-scheme = prefer-dark` / `gtk-theme = Adwaita-dark` keys every start —
+  `xdg-desktop-portal-gtk` serves these on the portal Settings interface, which
+  is what GTK4/libadwaita, Firefox, Chromium, Electron and Qt 6.5+ read to
+  "follow the system". GTK3 apps read `gtk-3.0/settings.ini` (in the repo,
+  already dark). Qt5-only apps need `qt5ct` + `QT_QPA_PLATFORMTHEME` if any turn
+  up — none in the current app set.
 - **mako**: callout cards, `▸` marker (matches rofi prompt), inset from the
   top-right so it clears... (bracket now gone, but the inset is fine).
 - **Boot login**: no display manager. `agetty` autologins `bas` on tty1

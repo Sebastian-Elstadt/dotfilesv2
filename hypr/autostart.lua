@@ -25,6 +25,15 @@ hl.on("hyprland.start", function()
   -- lock you dismiss with your password anyway.
   hl.exec_cmd(SCRIPTS .. "/lock.sh")
 
+  -- Dark by default. There's no DE to hold this preference, so apps that
+  -- "follow the system" (GTK4 / libadwaita, Firefox, Chromium, Electron,
+  -- Qt 6.5+) read it from the xdg-desktop-portal Settings interface, which
+  -- xdg-desktop-portal-gtk sources from these GNOME keys. GTK3 apps also read
+  -- ~/.config/gtk-3.0/settings.ini (kept in the repo). Idempotent; safe to
+  -- re-run every start.
+  hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme prefer-dark")
+  hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark")
+
   -- polkit auth agent (GUI privilege prompts)
   hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
 
