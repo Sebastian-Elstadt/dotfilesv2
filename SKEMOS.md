@@ -75,8 +75,8 @@ Other: `waybar/` (config.jsonc + style.css + scripts; **`drawer.jsonc` + `drawer
   inactive. Even `gaps_out = 10` all sides. **borders-plus-plus was tried and
   dropped** (v1.0 = one adjacent border, no gap; plugin border didn't fade with
   the window). No plugins now.
-- **waybar**: solid `@raised` strip, quiet 1px cell dividers, `SK-01` stamp
-  left, `MODE` the one boxed cell. Right side is a telemetry cluster:
+- **waybar**: solid `@raised` strip, quiet 1px cell dividers, the logged-in
+  user (`custom/sheet`, upper-cased) stamped left, `MODE` the one boxed cell. Right side is a telemetry cluster:
   `CPU · MEM · °C · NET · SND · clock` (tray removed — it was the empty gap;
   re-add `"tray"` to `modules-right` if a GTK tray app is needed). Telemetry
   cells have fixed `min-width` (style.css) so digit-count changes don't reflow

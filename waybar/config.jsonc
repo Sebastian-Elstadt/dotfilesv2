@@ -13,9 +13,9 @@
   "modules-center": ["hyprland/window"],
   "modules-right":  ["custom/minimized", "cpu", "memory", "custom/temp", "network", "wireplumber", "clock"],
 
-  // static drawing-number stamp, left of the coordinate row
+  // operator stamp — the logged-in user, left of the coordinate row
   "custom/sheet": {
-    "exec": "echo SK-01",
+    "exec": "id -un | tr '[:lower:]' '[:upper:]'",
     "format": "{}",
     "tooltip": false
   },
