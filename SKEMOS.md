@@ -61,10 +61,12 @@ Other: `waybar/` (config.jsonc + style.css + scripts), `rofi/skemos.rasi`,
   Bayer 4×4 dither so dark fields read as a plotted panel, text stays crisp;
   faint scanline + vignette. The corner-bracket HUD used to be here, was
   intrusive over windows, **removed**. Tunables are `const`s at the top.
-- **Corner brackets / reg marks / edge ticks / title block** live on the
-  **wallpaper** (`wallpaper.sh`) — only visible on a bare desktop, never over a
-  window. Top corners pushed down `topshift=24` (waybar clearance); bottom-right
-  omitted (title block there).
+- **Corner brackets / reg marks / title block** live on the **wallpaper**
+  (`wallpaper.sh`) — only visible on a bare desktop, never over a window. Top
+  corners pushed down `topshift=24` (waybar clearance); bottom-right omitted
+  (title block there). Grid pitch is fitted per-resolution so every screen edge
+  cuts a cell by ~25% (no stray partial column); the old edge ticks were removed
+  (read as stray white pieces).
 - **Motion** (`look.lua`): ~90–140 ms, hard-decel curves. Windows materialise
   (fast fade + 4% assemble); close is near-instant (`skGone`, speed 20);
   workspaces `slidefade`; drawer `slidevert`; **border animation off** (instant
@@ -76,7 +78,9 @@ Other: `waybar/` (config.jsonc + style.css + scripts), `rofi/skemos.rasi`,
 - **waybar**: solid `@raised` strip, quiet 1px cell dividers, `SK-01` stamp
   left, `MODE` the one boxed cell. Right side is a telemetry cluster:
   `CPU · MEM · °C · NET · SND · clock` (tray removed — it was the empty gap;
-  re-add `"tray"` to `modules-right` if a GTK tray app is needed).
+  re-add `"tray"` to `modules-right` if a GTK tray app is needed). Telemetry
+  cells have fixed `min-width` (style.css) so digit-count changes don't reflow
+  the row; `custom/temp.sh` reads k10temp Tctl.
 - **rofi** (`skemos.rasi`): full-height right-side **panel**, inset 12 px
   top/right/bottom (matches window gap), slides in from the right (`sk-rofi-slide`
   layer rule + `layers` animation speed 12).

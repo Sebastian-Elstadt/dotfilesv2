@@ -21,7 +21,7 @@ INK_DIM="#9a948a"
 INK_FAINT="#55514a"
 ACCENT="#c1663a"
 
-GRID=48            # schematic grid pitch (px)
+GRID=48            # target grid pitch (px); actual pitch is fitted per-resolution
 GRID_ALPHA=0.055   # grid opacity — faint
 GRAIN_PCT=7        # paper grain opacity (%)
 FONT="$(fc-match -f '%{file}' 'Iosevka' 2>/dev/null || true)"
@@ -31,12 +31,19 @@ gen() { # gen W H OUTFILE
   local tmp; tmp="$(mktemp -d)"
   trap 'rm -rf "${tmp:-}"' RETURN
 
-  # 1. schematic grid — 1px white hairline tile, knocked back
-  magick -size "${GRID}x${GRID}" xc:none \
-    -stroke "$INK" -strokewidth 1 -fill none \
-    -draw "line 0,0 ${GRID},0" -draw "line 0,0 0,${GRID}" \
-    "$tmp/tile.png"
-  magick -size "${w}x${h}" tile:"$tmp/tile.png" \
+  # 1. schematic grid — square cells at a pitch chosen so every screen edge
+  #    cuts a cell by ~25% (no stray partial column). Explicit lines, then
+  #    knocked back to GRID_ALPHA.
+  local gridcmds
+  gridcmds="$(awk -v w="$w" -v h="$h" -v p0="$GRID" 'BEGIN {
+      cols = int(w / p0 + 0.5); if (cols < 2) cols = 2
+      p = w / (cols - 0.5)                              # 25% cut, left & right
+      for (x = 0.75 * p; x < w - 0.1; x += p) printf "line %.1f,0 %.1f,%d ", x, x, h
+      for (y = 0.75 * p; y < h - 0.1; y += p) printf "line 0,%.1f %d,%.1f ", y, w, y
+  }')"
+  magick -size "${w}x${h}" xc:none -stroke "$INK" -strokewidth 1 -fill none \
+    -draw "$gridcmds" "$tmp/gridfull.png"
+  magick "$tmp/gridfull.png" \
     -channel A -evaluate multiply "$GRID_ALPHA" +channel \
     "$tmp/grid.png"
 
@@ -69,16 +76,7 @@ gen() { # gen W H OUTFILE
     regs+=" line ${rx},$(( ry - r-4 )) ${rx},$(( ry + r+4 ))"
   done
 
-  # 5. edge ticks — minor every GRID*2, major (longer) every GRID*8
-  local minor="" major=""
-  for (( x=GRID*2; x<w; x+=GRID*2 )); do
-    if (( x % (GRID*8) == 0 )); then major+=" line ${x},0 ${x},14  line ${x},$((h-1)) ${x},$((h-15))"
-    else                              minor+=" line ${x},0 ${x},7   line ${x},$((h-1)) ${x},$((h-8))"; fi
-  done
-  for (( y=GRID*2; y<h; y+=GRID*2 )); do
-    if (( y % (GRID*8) == 0 )); then major+=" line 0,${y} 14,${y}  line $((w-1)),${y} $((w-15)),${y}"
-    else                              minor+=" line 0,${y} 7,${y}   line $((w-1)),${y} $((w-8)),${y}"; fi
-  done
+  # (edge ticks removed — they read as stray white pieces on the screen edge)
 
   # 6. title block, bottom-right
   local bw=232 bh=62
@@ -92,8 +90,6 @@ gen() { # gen W H OUTFILE
   magick "$tmp/flat.png" \
     -stroke "$INK"       -strokewidth 1 -fill none -draw "$brackets" \
     -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$regs" \
-    -stroke "$INK_FAINT" -strokewidth 1 -fill none -draw "$minor" \
-    -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$major" \
     -stroke "$INK_DIM"   -strokewidth 1 -fill none -draw "$tb" \
     -stroke none -fill "$ACCENT" -draw "rectangle $((bx+bw-34)),$((by+30)) $((bx+bw-12)),$((by+52))" \
     ${FONT:+-font "$FONT"} -stroke none -fill "$INK" -pointsize 13 \

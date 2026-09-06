@@ -109,11 +109,19 @@ window#waybar.empty #window { color: @ink-faint; }
   box-shadow: none;
 }
 
-/* ---- telemetry cluster ------------------------------------- */
+/* ---- telemetry cluster: fixed cell widths so digit-count changes don't
+       reflow the row (min-width sized for the widest value) --------------- */
 #cpu,
 #memory,
 #custom-temp,
-#network { color: @ink-dim; letter-spacing: 0.5px; }
+#network {
+  color: @ink-dim;
+  letter-spacing: 0.5px;
+}
+#cpu         { min-width: 52px; }   /* CPU 100% */
+#memory      { min-width: 52px; }   /* MEM 100% */
+#custom-temp { min-width: 30px; }   /* 100°     */
+#network     { min-width: 88px; }   /* NET 118.5MB/s */
 #custom-temp.hot { color: @accent; }
 #network.disconnected { color: @accent; }
 
