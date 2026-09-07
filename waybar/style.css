@@ -15,7 +15,10 @@
   border: none;
   border-radius: 0;
   min-height: 0;
-  font-family: "Iosevka", "Iosevka Nerd Font", monospace;
+  /* Departure Mono — a lo-fi pixel/plotter face for the chrome labels. Falls
+     back to Iosevka for any glyph it lacks (arrows, ✕). Installed per-user in
+     ~/.local/share/fonts; packaged as AUR otf-departure-mono. */
+  font-family: "Departure Mono", "Iosevka", "Iosevka Nerd Font", monospace;
   font-size: 11px;
   font-weight: 400;
 }
@@ -45,6 +48,7 @@ tooltip label { color: @ink; }
 #custom-temp,
 #network,
 #wireplumber,
+#custom-rev,
 #clock {
   padding: 0 12px;
   box-shadow: inset 1px 0 0 @rule;
@@ -58,12 +62,15 @@ tooltip label { color: @ink; }
 /* ---- workspaces: the coordinate row ---------------------------- */
 #workspaces { margin: 0; }
 #workspaces button {
-  padding: 0 9px;
+  padding: 0 8px;
   margin: 0;
+  min-width: 20px;                      /* 2 digits align in a fixed cell */
   color: @ink-faint;
   background: transparent;
+  font-feature-settings: "tnum";
   box-shadow: inset 0 -1px transparent;
 }
+#workspaces button.empty { color: @ink-faint; }
 #workspaces button:hover {
   color: @ink-dim;
   box-shadow: inset 0 -1px @rule;
@@ -127,6 +134,14 @@ window#waybar.empty #window { color: @ink-faint; }
 
 #wireplumber { color: @ink-dim; }
 #wireplumber.muted { color: @accent; }
+
+/* ---- revision cell: drawing number, quiet ---------------------- */
+#custom-rev {
+  color: @ink-faint;
+  letter-spacing: 1px;
+  min-width: 78px;                      /* REV a1b2c3d* */
+}
+#custom-rev.dirty { color: @ink-dim; }  /* uncommitted work — a touch brighter */
 
 #clock {
   color: @ink;

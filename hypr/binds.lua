@@ -35,6 +35,19 @@ hl.bind(mod .. " + SHIFT + F",      hl.dsp.window.fullscreen({ action = "toggle"
 hl.bind(mod .. " + P",              hl.dsp.window.pseudo())
 hl.bind(mod .. " + J",              hl.dsp.layout("togglesplit"))   -- dwindle
 
+-- ==== GROUP BARS — trial (added 2026-09-07) ==========================
+-- SUPER+G       fold the focused window into / out of a group (tab stack)
+-- SUPER+]  / [  next / previous tab in the group
+-- SUPER+SHIFT+] / [  move the active window along the tab order
+-- Add more windows by dragging their titlebar onto the groupbar.
+-- TO REMOVE: delete this block and the "GROUP BARS" block in look.lua.
+hl.bind(mod .. " + G",             hl.dsp.group.toggle())
+hl.bind(mod .. " + bracketright",  hl.dsp.group.next())
+hl.bind(mod .. " + bracketleft",   hl.dsp.group.prev())
+hl.bind(mod .. " + SHIFT + bracketright", hl.dsp.group.move_window({ direction = "f" }))
+hl.bind(mod .. " + SHIFT + bracketleft",  hl.dsp.group.move_window({ direction = "b" }))
+-- ==== end GROUP BARS ================================================
+
 -- --- focus / move: ARROW KEYS -----------------------------------------
 local DIR = { Left = "l", Right = "r", Up = "u", Down = "d" }
 for key, d in pairs(DIR) do

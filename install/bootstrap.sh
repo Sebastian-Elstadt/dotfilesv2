@@ -6,7 +6,8 @@
 #     ~/.config/install/bootstrap.sh
 #
 # Does only: pacman install, enable PipeWire + NetworkManager, font cache,
-# append the Hyprland launch line to ~/.bash_profile.
+# append the Hyprland launch line to ~/.bash_profile, source the Skemos shell
+# dressing from ~/.bashrc.
 # Does NOT touch disks, the ESP, the bootloader, or enable autologin.
 
 set -euo pipefail
@@ -32,6 +33,20 @@ sudo systemctl enable --now NetworkManager.service
 
 # 4. fonts -----------------------------------------------------------
 say "Rebuilding font cache."
+# Departure Mono (waybar chrome) is AUR-only. If it is not installed, drop the
+# OFL OTF into the per-user font dir — no root needed.
+if ! fc-list | grep -qi 'Departure Mono'; then
+  say "Fetching Departure Mono into ~/.local/share/fonts (or: yay -S otf-departure-mono)"
+  dmurl="https://github.com/rektdeckard/departure-mono/releases/download/v1.500/DepartureMono-1.500.zip"
+  if tmp="$(mktemp -d)" && curl -fsSL -o "$tmp/dm.zip" "$dmurl"; then
+    mkdir -p "$HOME/.local/share/fonts/DepartureMono"
+    bsdtar -xf "$tmp/dm.zip" -C "$tmp" 2>/dev/null || unzip -oq "$tmp/dm.zip" -d "$tmp"
+    find "$tmp" -iname '*.otf' -exec cp {} "$HOME/.local/share/fonts/DepartureMono/" \;
+    rm -rf "$tmp"
+  else
+    say "  (fetch failed — waybar will fall back to Iosevka; install it later)"
+  fi
+fi
 fc-cache -f
 
 # 5. launch on login ----------------------------------------------
@@ -41,6 +56,15 @@ if ! grep -q 'start-hyprland' "$HOME/.bash_profile" 2>/dev/null; then
   cat "$HERE/bash_profile.snippet" >> "$HOME/.bash_profile"
 else
   say "~/.bash_profile already has a start-hyprland line — leaving it."
+fi
+
+# 6. shell dressing -------------------------------------------------
+if ! grep -q 'bash/skemos.bash' "$HOME/.bashrc" 2>/dev/null; then
+  say "Sourcing the Skemos shell dressing (prompt + banner) from ~/.bashrc"
+  {
+    printf '\n# Skemos shell dressing (title-block prompt + login banner).\n'
+    printf '[[ -f ~/.config/bash/skemos.bash ]] && . ~/.config/bash/skemos.bash\n'
+  } >> "$HOME/.bashrc"
 fi
 
 say "Done. Verify with 'Hyprland --verify-config', then log out and log back in."

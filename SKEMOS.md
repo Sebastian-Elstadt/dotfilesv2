@@ -60,9 +60,9 @@ bare-metal setup guide; this is "where we are and why".
 |---|---|
 | `colors.lua` | palette — single source of truth. warm off-white `#e5e1d6` on ink `#161513`, one accent burnt-orange `#c1663a`, hairline `#34322d`, faint `#55514a`. Other components carry their own copy — keep in sync. |
 | `monitors.lua` | generic wildcard output rule |
-| `look.lua` | borders, gaps, `decoration:screen_shader`, **animations** (curves `skLinear/skOut/skSnap/skGone`, per-leaf speeds) |
+| `look.lua` | borders, gaps, `decoration:screen_shader`, **animations** (curves `skLinear/skOut/skSnap/skGone`, per-leaf speeds), **group bars** (fenced `GROUP BARS — trial` block — flat tabbed title strip; delete block + the binds block to remove) |
 | `rules.lua` | window rules; floating-only shadow; **rofi layer rule** (`slide`) |
-| `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R`, window switcher `SUPER+W` (`scripts/window-switch.sh` — `hyprctl clients` → rofi `-dmenu` → `hl.dsp.focus({window=…})`, which pulls the target workspace into view) |
+| `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R`, window switcher `SUPER+W` (`scripts/window-switch.sh` — `hyprctl clients` → rofi `-dmenu` → `hl.dsp.focus({window=…})`, which pulls the target workspace into view). **Group bars trial** (fenced block): `SUPER+G` fold in/out of a group, `SUPER+]`/`[` next/prev tab, `SUPER+SHIFT+]`/`[` reorder. |
 | `modes.lua` | per-workspace **TILE ⇄ DESK** toggle (`SUPER+SHIFT+SPACE`), persisted to `~/.local/state/skemos/`. Bails with a notify if the focused window is in the drawer (its real ws is *under* the drawer — a blind toggle would reshuffle that). |
 | `alttab.lua` | **`ALT+TAB` / `ALT+SHIFT+TAB`** — walk windows in MRU order (`hl.get_windows()` sorted by `focus_history_id`). Snapshots the order per run; a run goes stale after 2 s or an outside focus change. Skips `special:*`. `require`d for side effects in `binds.lua`. |
 | `minimize.lua` | `special:minimized` drawer (`SUPER+M` minimize / restore, `SUPER+SHIFT+M` show-hide). Restore uses `hl.get_active_workspace()`, which correctly returns the real ws under the drawer — verified, not buggy. |
@@ -71,6 +71,12 @@ bare-metal setup guide; this is "where we are and why".
 Other: `waybar/` (config.jsonc + style.css + scripts; **`drawer.jsonc` + `drawer.css`** = the bottom drawer banner), `rofi/skemos.rasi`,
 `mako/config`, `hypr/hyprlock.conf`, `hypr/shaders/skemos.frag`,
 `hypr/scripts/wallpaper.sh`, `kitty/skemos.conf` + `foot/foot.ini`.
+
+`bash/skemos.bash` — shell dressing: a two-line title-block prompt (`╭─ user@host
+· ~/path · <rev><*>` / `╰▸`, rev + `✕ N` exit marker) and a compact login
+banner (once per terminal — parent-process check, since SHLVL is 2+ for every
+terminal under the single login shell). Sourced from `~/.bashrc` (NOT in the
+repo; `bootstrap.sh` adds the line). `SKEMOS_BANNER=0` drops the banner.
 
 ---
 
@@ -94,12 +100,31 @@ Other: `waybar/` (config.jsonc + style.css + scripts; **`drawer.jsonc` + `drawer
   inactive. Even `gaps_out = 10` all sides. **borders-plus-plus was tried and
   dropped** (v1.0 = one adjacent border, no gap; plugin border didn't fade with
   the window). No plugins now.
+- **Group bars** (trial, added 2026-09-07 — fenced blocks in `look.lua` +
+  `binds.lua`, delete both to remove): native tabbed window stacks with a
+  title-block strip on top. Styled flat — `gradients = false`, Departure Mono
+  9px, `height 16`, `indicator_height 2` (the one orange line under the active
+  tab), group frame in burnt orange. `group:auto_group` defaults to **true** in
+  0.56.2, so once a group exists new windows join it; `SUPER+G` pops the focused
+  one back out. Keyboard-add-a-specific-window isn't wired: `moveintogroup` /
+  `movewindoworgroup` have **no Lua dispatcher** in 0.56.2 (only `toggle`,
+  `next`, `prev`, `move_window`, `lock` under `hl.dsp.group`) — drag a titlebar
+  onto the bar instead.
 - **waybar**: solid `@raised` strip, quiet 1px cell dividers, the logged-in
-  user (`custom/sheet`, upper-cased) stamped left, `MODE` the one boxed cell. Right side is a telemetry cluster:
-  `CPU · MEM · °C · NET · SND · clock` (tray removed — it was the empty gap;
-  re-add `"tray"` to `modules-right` if a GTK tray app is needed). Telemetry
-  cells have fixed `min-width` (style.css) so digit-count changes don't reflow
-  the row; `custom/temp.sh` reads k10temp Tctl.
+  user (`custom/sheet`, upper-cased) stamped left, `MODE` the one boxed cell.
+  **Font is Departure Mono** (pixel/plotter face, `~/.local/share/fonts`, AUR
+  `otf-departure-mono`) with an Iosevka fallback for glyphs it lacks. Right side
+  is a telemetry cluster: `CPU · MEM · °C · NET · SND · REV · clock`
+  (tray removed — it was the empty gap; re-add `"tray"` to `modules-right` if a
+  GTK tray app is needed). Telemetry cells have fixed `min-width` (style.css) so
+  digit-count changes don't reflow the row; `custom/temp.sh` reads k10temp Tctl.
+  - **`custom/rev`** (`scripts/rev.sh`): `REV <7-char HEAD>` of `~/.config`,
+    `*` when the tracked tree is dirty (`.dirty` class → a touch brighter).
+    Click opens `git log` in foot. Polled every 30 s.
+  - **Workspaces** are a coordinate row: `format-icons` zero-pad the ids
+    (`01`…`10`), `persistent-workspaces {"*":[1..5]}` keeps 5 slots always
+    present, active slot gets the orange underline (CSS `button.active`). The
+    number/list form is used because `{"*": 5}` did not take on waybar 0.15.0.
 - **rofi** (`skemos.rasi`): full-height right-side **panel**, inset 12 px
   top/right/bottom (matches window gap), slides in from the right (`sk-rofi-slide`
   layer rule + `layers` animation speed 12).
@@ -136,10 +161,16 @@ Other: `waybar/` (config.jsonc + style.css + scripts; **`drawer.jsonc` + `drawer
 
 - Cheat-sheet on `SUPER+/` rendered as a schematic sheet (offered, not built).
 - Suspend/resume cycle test.
+- **Group bars** — trial in place; user to keep or cut (delete the two fenced
+  blocks). If kept: consider a `SUPER+SHIFT+arrow`-into-group path if Hyprland
+  ever exposes `moveintogroup` in the Lua API.
 - Possible waybar adds: media (`playerctl`), power menu, bluetooth, disk, update
   count.
+- Schematic screenshot frame, submap HUD (reuse `drawer-banner.sh`), crosshair
+  cursor — all offered, not built.
 - Dials the user tunes directly: shader `const`s, `look.lua` anim speeds,
-  wallpaper `inset` / `topshift` / `GRID_ALPHA`.
+  wallpaper `inset` / `topshift` / `GRID_ALPHA`, `bash/skemos.bash` banner /
+  `SKEMOS_BANNER`.
 
 ## Gotchas
 
@@ -156,6 +187,15 @@ Other: `waybar/` (config.jsonc + style.css + scripts; **`drawer.jsonc` + `drawer
 - Screen shaders using `uniform float time` force `debug:damage_tracking = 0`
   (huge GPU cost) — keep shaders static.
 - No resolution uniform for screen shaders — `RES` is hardcoded.
+- **Departure Mono** is AUR-only (`otf-departure-mono`); we install the OFL OTF
+  per-user in `~/.local/share/fonts/DepartureMono/` (no root). `bootstrap.sh`
+  fetches it if missing. Every consumer keeps an Iosevka fallback, so a missing
+  install just degrades gracefully.
+- Waybar `hyprland/workspaces` `persistent-workspaces` on 0.15.0 wants the
+  **list** form (`{"*":[1,2,3,4,5]}`); the count form (`{"*":5}`) silently did
+  nothing.
+- Shell banner can't key off `SHLVL` (every terminal is 2+ under the one login
+  shell that `exec`s Hyprland) — it checks the **parent process name** instead.
 - `grim` screenshots DO include the screen-shader output.
 - git identity in this repo: `bas <sebastian@elstadt.com>`.
 

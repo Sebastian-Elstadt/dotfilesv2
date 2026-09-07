@@ -34,6 +34,10 @@ imagemagick                   # renders the schematic-sheet wallpaper per monito
 ttc-iosevka                   # primary monospace everywhere
 ttf-iosevka-nerd              # Nerd Font glyphs for the bar
 noto-fonts                    # UTF-8 coverage fallback (no colour-emoji font on purpose)
+# otf-departure-mono          # AUR — pixel/plotter face for the waybar chrome.
+#                               Optional: bootstrap.sh fetches the OFL OTF into
+#                               ~/.local/share/fonts if it is missing. Waybar
+#                               falls back to Iosevka without it.
 
 # --- cursor ---
 adwaita-cursors               # a real cursor theme (Wayland shows none without one)

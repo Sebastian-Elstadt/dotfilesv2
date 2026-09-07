@@ -76,9 +76,12 @@ $EDITOR ~/.config/install/packages.txt
 ```
 
 `bootstrap.sh` runs `sudo pacman -Syu --needed` on the list, enables PipeWire +
-NetworkManager, rebuilds the font cache, and appends the Hyprland launch line to
-`~/.bash_profile`. It never touches disks, the ESP, the bootloader, or autologin.
-Review it before running — it is the only privileged step.
+NetworkManager, rebuilds the font cache (fetching Departure Mono into
+`~/.local/share/fonts` if it is not already installed), appends the Hyprland
+launch line to `~/.bash_profile`, and sources the Skemos shell dressing (prompt
++ login banner) from `~/.bashrc`. It never touches disks, the ESP, the
+bootloader, or autologin. Review it before running — it is the only privileged
+step.
 
 ### Boot straight into the schematic lock screen
 
@@ -147,6 +150,7 @@ All under `~/.config/`, committed — edit and `git commit` your machine's choic
 | Want | Change |
 |---|---|
 | **kitty** as the terminal instead of foot | `hypr/binds.lua`: `local terminal = "kitty"` |
+| Drop the shell **login banner** (keep the prompt) | `export SKEMOS_BANNER=0` in `~/.bashrc`; or remove the `skemos.bash` source line for both |
 | A specific mode / scale / position for your panel | `hypr/monitors.lua`: add `hl.monitor({ output = "eDP-1", mode = "...", scale = 1.5, position = "auto" })` **above** the wildcard rule |
 | Suspend on long idle | `hypr/hypridle.conf`: uncomment the `systemctl suspend` listener |
 | Different lock / dim / dpms timeouts | `hypr/hypridle.conf` |
@@ -189,6 +193,7 @@ systemctl --user status hyprpolkitagent
 | `SUPER`+`Q` (or `Return`) | terminal · `SUPER`+`D` / `SUPER`+`R` rofi · `SUPER`+`C` close |
 | `SUPER`+`W` | window switcher — search all windows on all workspaces, jump to one |
 | `ALT`+`TAB` / `ALT`+`SHIFT`+`TAB` | walk windows in most-recently-used order (tap to go further) |
+| `SUPER`+`G` · `SUPER`+`]` / `[` | group bars (trial) — fold window in/out of a tab stack · next / prev tab |
 | `SUPER`+`SHIFT`+`SPACE` | toggle TILE ↔ DESK on the current workspace |
 | `SUPER`+`SPACE` | float / tile the active window |
 | `SUPER`+`M` / `SUPER`+`SHIFT`+`M` | minimize to drawer / toggle drawer |

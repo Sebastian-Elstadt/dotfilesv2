@@ -89,6 +89,33 @@ hl.config({
 
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 
+-- ==== GROUP BARS — trial (added 2026-09-07) ==============================
+-- Tabbed window stacks with a title-block strip along the top. Native, no
+-- plugin. Styled to match: flat, no gradients, hairline, the active tab in
+-- burnt orange. Keybinds are in binds.lua under the same "GROUP BARS — trial"
+-- banner. TO REMOVE: delete this whole block and that bind block — nothing
+-- else references groups.
+hl.config({
+  group = {
+    ["col.border_active"]   = c.rgba.accent,   -- grouped + focused = orange frame
+    ["col.border_inactive"] = c.rgba.rule,
+    groupbar = {
+      enabled          = true,
+      render_titles    = true,
+      stacked          = false,
+      gradients        = false,               -- flat tabs, not the default candy
+      font_family      = "Departure Mono",
+      font_size        = 9,
+      height           = 16,
+      indicator_height = 2,                    -- the one accent line under a tab
+      text_color          = c.rgba.ink_dim,
+      ["col.active"]      = c.rgba.raised,     -- active tab ground
+      ["col.inactive"]    = c.rgba.bg,
+    },
+  },
+})
+-- ==== end GROUP BARS ====================================================
+
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 

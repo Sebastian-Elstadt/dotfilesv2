@@ -11,7 +11,7 @@
 
   "modules-left":   ["custom/sheet", "hyprland/workspaces", "custom/mode"],
   "modules-center": ["hyprland/window"],
-  "modules-right":  ["custom/minimized", "cpu", "memory", "custom/temp", "network", "wireplumber", "clock"],
+  "modules-right":  ["custom/minimized", "cpu", "memory", "custom/temp", "network", "wireplumber", "custom/rev", "clock"],
 
   // operator stamp — the logged-in user, left of the coordinate row
   "custom/sheet": {
@@ -20,11 +20,19 @@
     "tooltip": false
   },
 
+  // coordinate row: zero-padded slot numbers, 5 always present, more appear as
+  // used. The active slot is marked in CSS (orange underline). Bump the "*"
+  // count for more permanent slots.
   "hyprland/workspaces": {
-    "format": "{id}",
+    "format": "{icon}",
+    "format-icons": {
+      "1": "01", "2": "02", "3": "03", "4": "04", "5": "05",
+      "6": "06", "7": "07", "8": "08", "9": "09", "10": "10",
+      "urgent": "!!", "default": "··"
+    },
     "on-click": "activate",
     "sort-by-number": true,
-    "persistent-workspaces": {}
+    "persistent-workspaces": { "*": [1, 2, 3, 4, 5] }
   },
 
   // TILE / DESK for the ACTIVE workspace. Polled + signalled (modes.lua sends
@@ -85,6 +93,14 @@
     "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-",
     "max-volume": 100,
     "tooltip": false
+  },
+
+  // drawing revision — ~/.config git HEAD, "*" = dirty tracked tree
+  "custom/rev": {
+    "exec": "~/.config/waybar/scripts/rev.sh",
+    "return-type": "json",
+    "interval": 30,
+    "on-click": "foot -e sh -c 'cd ~/.config && git log --oneline -20 && read -n1 -p \"\"'"
   },
 
   "clock": {
