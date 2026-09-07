@@ -14,11 +14,15 @@ bare-metal setup guide; this is "where we are and why".
 
 `saber` — bare-metal desktop, migrated off a Windows VM Sept 2026.
 
-- **GPU**: NVIDIA RTX 5070 (`nvidia-open` 610, PCI `01:00.0`) **+** AMD Granite
-  Ridge iGPU (`12:00.0`). Compositor runs on the NVIDIA card. `mesa` stays
-  installed (iGPU + GL loader).
-- **Display**: single `DP-1`, 2560×1440, scale 1. Hardcoded in
-  `hypr/shaders/skemos.frag` and figured live by `hypr/scripts/wallpaper.sh`.
+- **GPU**: NVIDIA RTX 5070 (`nvidia-open` 610, PCI `01:00.0`, `card0`) **+** AMD
+  Granite Ridge iGPU (`12:00.0`, `card1`). `mesa` stays installed (iGPU + GL
+  loader). The NVIDIA card is pinned primary via
+  `AQ_DRM_DEVICES=/dev/dri/card0:/dev/dri/card1` in `hyprland.lua` — see below.
+- **Display**: single `DP-1`, 2560×1440, scale 1 — **wired to a DP port on the
+  NVIDIA card** (`card0-DP-1`), which is why NVIDIA must be the primary render
+  node (else every frame is rendered on the iGPU and PCIe-copied to NVIDIA just
+  to scan out). Resolution hardcoded in `hypr/shaders/skemos.frag`, figured live
+  by `hypr/scripts/wallpaper.sh`.
 - **Launch**: `~/.bash_profile` → `exec start-hyprland` on tty1 (not uwsm, not a
   display manager). `~/.bash_profile` is NOT in the repo.
 - **Hyprland 0.56.2**, Lua config.
@@ -29,9 +33,22 @@ bare-metal setup guide; this is "where we are and why".
   these, resume from suspend black-screens (the cmdline
   `NVreg_PreserveVideoMemoryAllocations=1` is a no-op alone).
 - `/etc/modprobe.d/nouveau-blacklist.conf` → `blacklist nouveau`; `mkinitcpio -P`.
-- `AQ_DRM_DEVICES` is deliberately NOT set — by-path symlinks crash Aquamarine
-  (`CBackend::create() failed!`). If pinning is ever needed use plain node paths
-  and test.
+- `AQ_DRM_DEVICES=/dev/dri/card0:/dev/dri/card1` set in `hyprland.lua` (plain
+  node paths — `/dev/dri/by-path/*` symlinks crash Aquamarine 0.15,
+  `CBackend::create() failed!`). Pins the NVIDIA card (`card0`, the one the
+  monitor is on) as primary. Before this, Aquamarine's primary pick raced boot
+  to boot: iGPU-primary boots ran the whole desktop on Mesa/iGPU with a
+  per-frame PCIe copy to NVIDIA for scanout, and also flipped the `skemos.frag`
+  shader-link error on and off (Mesa strict / NVIDIA lenient). `card0` = NVIDIA
+  is deterministic (`nvidia_drm` in initramfs `MODULES`, claims DRM minor 0
+  before `amdgpu`). **Needs a reboot / full Hyprland restart to take effect —
+  `hyprctl reload` won't do it.**
+- **Untested by us**: whether `AQ_DRM_DEVICES` via `hl.env` reliably beats
+  Aquamarine's backend init after a real reboot (verified config parses; live
+  switch not yet confirmed). Verify: `grep 'becomes primary drm'
+  $XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log` should show
+  `card0`. Fallback if not: put the same `export` in `~/.bash_profile` before
+  `start-hyprland`.
 - **Untested by us**: an actual `systemctl suspend` / resume cycle. Worth doing.
 
 ---

@@ -122,9 +122,18 @@ that matters, skip this and keep the text login. To undo:
   5. **Suspend/resume** — without these the `PreserveVideoMemoryAllocations`
      flag is a no-op and resume black-screens:
      `sudo systemctl enable nvidia-suspend.service nvidia-resume.service nvidia-persistenced.service`
-  6. Multi-GPU render node is pinned in `hypr/hyprland.lua` via `AQ_DRM_DEVICES`
-     (NVIDIA card first, by stable PCI path). Adjust the PCI addresses if the
-     hardware differs — `lspci -k | grep -A2 VGA`.
+  6. **The monitor is on a DP port of the NVIDIA card**, so the NVIDIA card is
+     pinned primary in `hypr/hyprland.lua` via
+     `AQ_DRM_DEVICES=/dev/dri/card0:/dev/dri/card1` (first = primary). Without
+     this, Aquamarine's primary pick races each boot; when the iGPU wins it
+     renders the desktop on the iGPU and copies every frame to the NVIDIA card
+     for scanout (latency, no direct scanout, 5070 idle). `card0` = NVIDIA
+     because `nvidia_drm` is in the initramfs `MODULES` and claims DRM minor 0
+     before `amdgpu` loads. Plain node paths only — `/dev/dri/by-path/*`
+     symlinks crash Aquamarine 0.15 (`CBackend::create() failed!`). Verify the
+     mapping with `ls -l /dev/dri/by-path/pci-0000:01:00.0-card`; if a monitor
+     is instead wired to the motherboard (iGPU) port, drop this env or list the
+     iGPU first.
   7. `__GLX_VENDOR_LIBRARY_NAME=nvidia` is set in `hypr/hyprland.lua`. HW video
      decode (`LIBVA_DRIVER_NAME`) is deliberately not set — the VAAPI bridge is
      AUR-only; add `libva-nvidia-driver` yourself if you want it.
