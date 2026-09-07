@@ -62,7 +62,7 @@ bare-metal setup guide; this is "where we are and why".
 | `monitors.lua` | generic wildcard output rule |
 | `look.lua` | borders, gaps, `decoration:screen_shader`, **animations** (curves `skLinear/skOut/skSnap/skGone`, per-leaf speeds) |
 | `rules.lua` | window rules; floating-only shadow; **rofi layer rule** (`slide`) |
-| `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R`, window switcher `SUPER+W` (`scripts/window-switch.sh` — `hyprctl clients` → rofi `-dmenu` → `focuswindow`) |
+| `binds.lua` | keybinds. terminal `SUPER+Q` (+ `Return` alias), close `SUPER+C`, rofi `SUPER+D`/`R`, window switcher `SUPER+W` (`scripts/window-switch.sh` — `hyprctl clients` → rofi `-dmenu` → `hl.dsp.focus({window=…})`, which pulls the target workspace into view) |
 | `modes.lua` | per-workspace **TILE ⇄ DESK** toggle (`SUPER+SHIFT+SPACE`), persisted to `~/.local/state/skemos/`. Bails with a notify if the focused window is in the drawer (its real ws is *under* the drawer — a blind toggle would reshuffle that). |
 | `alttab.lua` | **`ALT+TAB` / `ALT+SHIFT+TAB`** — walk windows in MRU order (`hl.get_windows()` sorted by `focus_history_id`). Snapshots the order per run; a run goes stale after 2 s or an outside focus change. Skips `special:*`. `require`d for side effects in `binds.lua`. |
 | `minimize.lua` | `special:minimized` drawer (`SUPER+M` minimize / restore, `SUPER+SHIFT+M` show-hide). Restore uses `hl.get_active_workspace()`, which correctly returns the real ws under the drawer — verified, not buggy. |

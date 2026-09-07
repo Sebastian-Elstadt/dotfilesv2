@@ -37,4 +37,10 @@ idx=$(printf '%s\n' "${lines[@]}" | rofi -dmenu -i -matching fuzzy \
 [[ $idx =~ ^[0-9]+$ ]] || exit 0
 
 addr=$(cut -f1 <<<"${rows[$idx]}")
-[[ -n $addr ]] && hyprctl dispatch focuswindow "address:$addr"
+[[ -n $addr ]] || exit 0
+
+# hl.dsp.focus({ window = ... }) pulls its workspace into view and focuses it.
+# Must be the Lua form — Hyprland 0.56's `hyprctl dispatch` parses Lua, so the
+# old `dispatch focuswindow address:0x…` string form is a syntax error (silent
+# no-op: the panel closed but nothing moved).
+hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })"
