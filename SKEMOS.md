@@ -128,6 +128,13 @@ Other: `waybar/` (config.jsonc + style.css + scripts; **`drawer.jsonc` + `drawer
 - `hyprctl dispatch '<lua>'` works (0.56 evaluates Lua); `hyprctl keyword` does
   **not** — use `hyprctl reload` to apply config edits.
 - Screen-shader `gl_FragCoord` origin is **top-left, y down** (opposite GL).
+- Screen shaders **must** start with `#version 320 es` and use GLES3 syntax
+  (`in` / `layout(location=0) out vec4 fragColor` / `texture()`). Hyprland 0.56
+  only ships 300/320 es screen-shader vertex sources; a versionless shader
+  defaults to GLSL ES 1.00 and fails to link (`all shaders must use same
+  shading language version`) — but *only* on the strict Mesa path, i.e. boots
+  where the AMD iGPU wins the primary-GPU race (`AQ_DRM_DEVICES` unset), so it
+  looks intermittent. NVIDIA's compiler links the mismatch silently.
 - Screen shaders using `uniform float time` force `debug:damage_tracking = 0`
   (huge GPU cost) — keep shaders static.
 - No resolution uniform for screen shaders — `RES` is hardcoded.

@@ -1,5 +1,12 @@
+#version 320 es
 // Skemos — halftone screen shader.
 // Wired in via decoration:screen_shader in hypr/look.lua.
+//
+// GLES 3.20. The `#version` line is mandatory and must be first: Hyprland 0.56
+// pairs screen shaders with a `#version 320 es` vertex shader and only ships
+// 300/320 es variants — a versionless shader here defaults to GLSL ES 1.00 and
+// fails to link ("all shaders must use same shading language version") on the
+// strict Mesa path, i.e. on boots where the AMD iGPU wins the primary-GPU race.
 //
 // Static (no `time` uniform, so debug:damage_tracking stays ON, no GPU cost).
 // A fine ordered (Bayer 4x4) dither weighted toward the shadows: the ink-black
@@ -12,8 +19,10 @@
 // (hypr/scripts/wallpaper.sh) so it never sits over windows.
 
 precision highp float;
-varying vec2 v_texcoord;
+
+in  vec2 v_texcoord;
 uniform sampler2D tex;
+layout(location = 0) out vec4 fragColor;
 
 // ---- tunables -------------------------------------------------------------
 const float DITHER_STEPS = 34.0;   // quantisation levels; lower = chunkier stipple
@@ -38,7 +47,7 @@ float bayer4x4(vec2 c) {
 }
 
 void main() {
-    vec3 col = texture2D(tex, v_texcoord).rgb;
+    vec3 col = texture(tex, v_texcoord).rgb;
     vec2 p   = gl_FragCoord.xy;
 
     // halftone
@@ -56,5 +65,5 @@ void main() {
         col *= 1.0 - dot(uv, uv) * VIGNETTE;
     }
 
-    gl_FragColor = vec4(col, 1.0);
+    fragColor = vec4(col, 1.0);
 }
