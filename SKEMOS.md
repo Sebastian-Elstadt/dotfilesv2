@@ -18,7 +18,8 @@ bare-metal setup guide; this is "where we are and why".
   Granite Ridge iGPU (`12:00.0`, `card1`). `mesa` stays installed (iGPU + GL
   loader). The NVIDIA card is pinned primary via
   `AQ_DRM_DEVICES=/dev/dri/card0:/dev/dri/card1` in `hyprland.lua` — see below.
-- **Display**: single `DP-1`, 2560×1440, scale 1 — **wired to a DP port on the
+- **Display**: single `DP-1`, 2560×1440@180 (`monitors.lua` asks `highrr`), scale
+  1 — **wired to a DP port on the
   NVIDIA card** (`card0-DP-1`), which is why NVIDIA must be the primary render
   node (else every frame is rendered on the iGPU and PCIe-copied to NVIDIA just
   to scan out). Resolution hardcoded in `hypr/shaders/skemos.frag`, figured live
