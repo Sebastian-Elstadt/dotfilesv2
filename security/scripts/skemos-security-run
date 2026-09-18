@@ -8,12 +8,14 @@
 # sudoers rule.
 set -euo pipefail
 
+[[ $# -eq 1 ]] || { echo "skemos-security-run: expected exactly one argument" >&2; exit 1; }
+
 case "${1:-}" in
-  integrity)    exec systemctl start skemos-integrity.service ;;
-  rkhunter)     exec systemctl start rkhunter-scan.service ;;
-  arch-audit)   exec systemctl start arch-audit-scan.service ;;
-  ufw-status)   exec systemctl start ufw-status.service ;;
-  audit-status) exec systemctl start audit-status.service ;;
+  integrity)    exec /usr/bin/systemctl start skemos-integrity.service ;;
+  rkhunter)     exec /usr/bin/systemctl start rkhunter-scan.service ;;
+  arch-audit)   exec /usr/bin/systemctl start arch-audit-scan.service ;;
+  ufw-status)   exec /usr/bin/systemctl start ufw-status.service ;;
+  audit-status) exec /usr/bin/systemctl start audit-status.service ;;
   *)
     echo "skemos-security-run: unknown job '${1:-}'" >&2
     echo "expected one of: integrity rkhunter arch-audit ufw-status audit-status" >&2
