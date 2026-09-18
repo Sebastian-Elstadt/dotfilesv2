@@ -14,24 +14,94 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 say() { printf '\n\033[1m>> %s\033[0m\n' "$*"; }
 
-# 1. packages -------------------------------------------------------------
-mapfile -t PKGS < <(sed -E 's/#.*//' "$HERE/packages.txt" | tr -s ' \t' '\n' | grep -E '^[a-z0-9]')
-say "Install / verify ${#PKGS[@]} packages:"
-printf '   %s\n' "${PKGS[@]}"
-say "Add your CPU microcode (amd-ucode / intel-ucode) and, for NVIDIA, the"
-say "nvidia packages — edit packages.txt first if you have not."
-read -r -p "   Enter to run 'sudo pacman -Syu --needed ...', Ctrl-C to abort. " _
-sudo pacman -Syu --needed "${PKGS[@]}"
+# 1. hardware detection ---------------------------------------------------
+detect_cpu_pkg() {
+  case "$(grep -m1 '^vendor_id' /proc/cpuinfo | awk '{print $NF}')" in
+    AuthenticAMD) echo amd-ucode ;;
+    GenuineIntel) echo intel-ucode ;;
+    *) echo "" ;;
+  esac
+}
 
-# 2. audio --------------------------------------------------------------
+detect_gpu_pkgs() {
+  if lspci -nn 2>/dev/null | grep -Eq '(VGA compatible controller|3D controller).*\[10de:'; then
+    echo "nvidia-open-dkms linux-headers egl-wayland"
+  fi
+}
+
+cpu_pkg="$(detect_cpu_pkg)"
+gpu_pkgs="$(detect_gpu_pkgs)"
+
+say "Detected CPU: $(grep -m1 '^model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ *//') -> ${cpu_pkg:-'(unknown vendor — add your microcode package manually)'}"
+say "Detected GPU(s):"
+lspci -nn 2>/dev/null | grep -E 'VGA compatible controller|3D controller' | sed 's/^/   /'
+if [[ -n $gpu_pkgs ]]; then
+  say "  -> NVIDIA present, adding: $gpu_pkgs"
+fi
+
+# 2. packages ---------------------------------------------------------
+mapfile -t PKGS < <(sed -E 's/#.*//' "$HERE/packages.txt" | tr -s ' \t' '\n' | grep -E '^[a-z0-9]')
+ALL_PKGS=("${PKGS[@]}" mesa)
+[[ -n $cpu_pkg ]] && ALL_PKGS+=("$cpu_pkg")
+[[ -n $gpu_pkgs ]] && ALL_PKGS+=($gpu_pkgs)
+
+say "Install / verify ${#ALL_PKGS[@]} packages:"
+printf '   %s\n' "${ALL_PKGS[@]}"
+read -r -p "   Enter to run 'sudo pacman -Syu --needed ...', Ctrl-C to abort. " _
+sudo pacman -Syu --needed "${ALL_PKGS[@]}"
+
+# 2. nvidia system changes (confirm-before-apply) --------------------
+if [[ -n $gpu_pkgs ]]; then
+  say "NVIDIA detected — reviewing system-level changes. Each one asks"
+  say "before touching /etc; none of this touches the bootloader or disks."
+
+  NOUVEAU_CONF=/etc/modprobe.d/nouveau-blacklist.conf
+  if [[ -f $NOUVEAU_CONF ]] && grep -q '^blacklist nouveau' "$NOUVEAU_CONF" 2>/dev/null; then
+    say "  $NOUVEAU_CONF already blacklists nouveau — skipping."
+  else
+    echo "  Would create $NOUVEAU_CONF containing: blacklist nouveau"
+    read -r -p "  Apply? [y/N] " a
+    if [[ $a == y || $a == Y ]]; then
+      echo "blacklist nouveau" | sudo tee "$NOUVEAU_CONF" >/dev/null
+    fi
+  fi
+
+  MKINITCPIO=/etc/mkinitcpio.conf
+  if grep -qE '^MODULES=.*nvidia' "$MKINITCPIO" 2>/dev/null; then
+    say "  $MKINITCPIO already lists an nvidia module set — skipping."
+  else
+    say "  $MKINITCPIO needs an nvidia module set, e.g.:"
+    say '    MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)'
+    read -r -p "  Open it in \$EDITOR now? [y/N] " a
+    if [[ $a == y || $a == Y ]]; then
+      sudo "${EDITOR:-vi}" "$MKINITCPIO"
+      read -r -p "  Run 'sudo mkinitcpio -P' now (needed for the change to take effect)? [y/N] " b
+      [[ $b == y || $b == Y ]] && sudo mkinitcpio -P
+    fi
+  fi
+
+  for svc in nvidia-suspend nvidia-resume nvidia-persistenced; do
+    if systemctl is-enabled --quiet "$svc" 2>/dev/null; then
+      say "  $svc.service already enabled — skipping."
+    else
+      read -r -p "  Enable $svc.service (needed for suspend/resume to work)? [Y/n] " a
+      [[ $a != n && $a != N ]] && sudo systemctl enable "$svc"
+    fi
+  done
+
+  say "  Kernel cmdline still needs (bootloader-specific, manual — see INSTALL.md §4):"
+  say "    nvidia_drm.modeset=1 nvidia.NVreg_PreserveVideoMemoryAllocations=1"
+fi
+
+# 3. audio --------------------------------------------------------------
 say "Enabling PipeWire user services."
 systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service
 
-# 3. networking -------------------------------------------------------
+# 4. networking -------------------------------------------------------
 say "Enabling NetworkManager."
 sudo systemctl enable --now NetworkManager.service
 
-# 4. fonts -----------------------------------------------------------
+# 5. fonts -----------------------------------------------------------
 say "Rebuilding font cache."
 # Departure Mono (waybar chrome) is AUR-only. If it is not installed, drop the
 # OFL OTF into the per-user font dir — no root needed.
@@ -49,7 +119,7 @@ if ! fc-list | grep -qi 'Departure Mono'; then
 fi
 fc-cache -f
 
-# 5. launch on login ----------------------------------------------
+# 6. launch on login ----------------------------------------------
 if ! grep -q 'start-hyprland' "$HOME/.bash_profile" 2>/dev/null; then
   say "Appending the Hyprland launch guard to ~/.bash_profile"
   printf '\n' >> "$HOME/.bash_profile"
@@ -58,7 +128,7 @@ else
   say "~/.bash_profile already has a start-hyprland line — leaving it."
 fi
 
-# 6. shell dressing -------------------------------------------------
+# 7. shell dressing -------------------------------------------------
 if ! grep -q 'bash/skemos.bash' "$HOME/.bashrc" 2>/dev/null; then
   say "Sourcing the Skemos shell dressing (prompt + banner) from ~/.bashrc"
   {

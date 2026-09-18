@@ -88,7 +88,7 @@ qt5-wayland
 qt6-wayland
 
 # --- GPU ---------------------------------------------------------------------
-# mesa is always needed (GL loader + the AMD iGPU driver on this box).
-mesa
+# mesa, nvidia-open-dkms, and related packages are auto-detected and added by
+# bootstrap.sh based on hardware. See install/bootstrap.sh §1.
 # NVIDIA discrete card (RTX 5070). nvidia-open covers Turing+. See INSTALL.md §4
 # for the modeset / mkinitcpio / suspend-service / AQ_DRM_DEVICES steps.
