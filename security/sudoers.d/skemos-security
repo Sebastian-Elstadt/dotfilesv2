@@ -1,0 +1,9 @@
+# Skemos security — lets the SUPER+S panel trigger a scan with no
+# re-prompt. TEMPLATE: __SKEMOS_USER__ is substituted for the real
+# username by bootstrap.sh (Task 14), which validates the result with
+# `visudo -c` BEFORE installing it to /etc/sudoers.d/skemos-security.
+#
+# The wrapper (security/scripts/skemos-security-run) only accepts a fixed
+# 5-job allowlist — nothing else is reachable through this rule. No
+# blanket sudo, no wildcard paths.
+__SKEMOS_USER__ ALL=(root) NOPASSWD: /usr/local/bin/skemos-security-run
