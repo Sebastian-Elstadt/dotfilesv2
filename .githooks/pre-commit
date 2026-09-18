@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Skemos — pre-commit secret scan. Wired via:
+#   git config core.hooksPath .githooks
+# (done automatically by install/bootstrap.sh). The repo stays PUBLIC by
+# deliberate choice — this is the safety net for that.
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not installed — skipping scan." >&2
+  echo "  Install it: see install/packages.txt, or run install/bootstrap.sh." >&2
+  exit 0
+fi
+
+gitleaks protect --staged --redact -v
