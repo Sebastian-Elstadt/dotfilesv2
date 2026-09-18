@@ -108,10 +108,17 @@ say "Rebuilding font cache."
 if ! fc-list | grep -qi 'Departure Mono'; then
   say "Fetching Departure Mono into ~/.local/share/fonts (or: yay -S otf-departure-mono)"
   dmurl="https://github.com/rektdeckard/departure-mono/releases/download/v1.500/DepartureMono-1.500.zip"
+  dmsha256="bf3e48059aeef4617ec585bdea81dcc3491c576b3e7a472f52faf40e09ee5c3a"
   if tmp="$(mktemp -d)" && curl -fsSL -o "$tmp/dm.zip" "$dmurl"; then
-    mkdir -p "$HOME/.local/share/fonts/DepartureMono"
-    bsdtar -xf "$tmp/dm.zip" -C "$tmp" 2>/dev/null || unzip -oq "$tmp/dm.zip" -d "$tmp"
-    find "$tmp" -iname '*.otf' -exec cp {} "$HOME/.local/share/fonts/DepartureMono/" \;
+    if echo "$dmsha256  $tmp/dm.zip" | sha256sum -c - >/dev/null 2>&1; then
+      mkdir -p "$HOME/.local/share/fonts/DepartureMono"
+      bsdtar -xf "$tmp/dm.zip" -C "$tmp" 2>/dev/null || unzip -oq "$tmp/dm.zip" -d "$tmp"
+      find "$tmp" -iname '*.otf' -exec cp {} "$HOME/.local/share/fonts/DepartureMono/" \;
+    else
+      say "  Checksum mismatch on Departure Mono download — refusing to install it."
+      say "  Expected $dmsha256"
+      say "  Got      $(sha256sum "$tmp/dm.zip" | awk '{print $1}')"
+    fi
     rm -rf "$tmp"
   else
     say "  (fetch failed — waybar will fall back to Iosevka; install it later)"
@@ -119,7 +126,28 @@ if ! fc-list | grep -qi 'Departure Mono'; then
 fi
 fc-cache -f
 
-# 6. launch on login ----------------------------------------------
+# 6. ssh readiness -----------------------------------------------------
+say "Checking SSH readiness."
+if ! compgen -G "$HOME/.ssh/id_ed25519" >/dev/null && ! compgen -G "$HOME/.ssh/id_rsa" >/dev/null; then
+  read -r -p "  No SSH keypair found. Generate one now (ed25519)? [Y/n] " a
+  if [[ $a != n && $a != N ]]; then
+    ssh-keygen -t ed25519 -C "$USER@$(uname -n)" -f "$HOME/.ssh/id_ed25519"
+    say "  Public key (add this to GitHub/GitLab/wherever you push):"
+    cat "$HOME/.ssh/id_ed25519.pub"
+  fi
+else
+  say "  SSH keypair already present — skipping."
+fi
+
+# 7. git hooks (gitleaks secret scan) ----------------------------------
+if [[ "$(git -C "$HOME/.config" config --get core.hooksPath 2>/dev/null)" != ".githooks" ]]; then
+  say "Wiring the gitleaks pre-commit hook (git config core.hooksPath .githooks)."
+  git -C "$HOME/.config" config core.hooksPath .githooks
+else
+  say "git hooks already wired — skipping."
+fi
+
+# 8. launch on login ----------------------------------------------
 if ! grep -q 'start-hyprland' "$HOME/.bash_profile" 2>/dev/null; then
   say "Appending the Hyprland launch guard to ~/.bash_profile"
   printf '\n' >> "$HOME/.bash_profile"
@@ -128,7 +156,7 @@ else
   say "~/.bash_profile already has a start-hyprland line — leaving it."
 fi
 
-# 7. shell dressing -------------------------------------------------
+# 9. shell dressing -------------------------------------------------
 if ! grep -q 'bash/skemos.bash' "$HOME/.bashrc" 2>/dev/null; then
   say "Sourcing the Skemos shell dressing (prompt + banner) from ~/.bashrc"
   {
