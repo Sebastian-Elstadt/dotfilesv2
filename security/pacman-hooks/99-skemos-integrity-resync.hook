@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Skemos: re-baselining the file-integrity watch after this transaction
+When = PostTransaction
+Exec = /usr/local/lib/skemos-security/integrity-check.sh --rebaseline
