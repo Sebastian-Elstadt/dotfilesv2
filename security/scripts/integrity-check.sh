@@ -30,6 +30,7 @@ hash_current() {
   for d in "${WATCH_DIRS[@]}"; do
     [[ -d $d ]] && find "$d" -type f -exec sha256sum {} \;
   done
+  return 0
 }
 
 install -d -o root -g root -m 0750 "$DB_DIR"
