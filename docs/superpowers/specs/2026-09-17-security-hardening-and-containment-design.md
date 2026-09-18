@@ -163,6 +163,34 @@ mostly don't but stay in the same uniform pattern for consistency.
   password — while the grant itself is one small, auditable file that can't
   be leveraged for anything beyond "run one of these 5 specific scripts."
   No blanket `sudo`, no broad polkit rule.
+- **Critical ownership rule**: anything a root-run sudoers command or a
+  systemd *system* service executes (the wrapper itself, the 5 per-job
+  scripts, `security/scripts/lib.sh`, the unit files, the sudoers rule, the
+  pacman hook, the audit rules) must **not** be writable by the unprivileged
+  user, or the NOPASSWD grant becomes an instant root escalation (edit the
+  script the wrapper calls, then trigger it with no password). The
+  repo copies of these under `~/.config/security/` are the **source** —
+  editable, version-controlled — but they are never executed from there
+  directly. `bootstrap.sh` **installs** them by copying into root-owned
+  locations and fixing ownership/mode, every time it runs (so "edit the repo,
+  re-run `bootstrap.sh`" is the update flow):
+  - `security/scripts/*.sh` → `/usr/local/lib/skemos-security/` (root:root,
+    `0755` dirs / `0755` scripts, not group- or world-writable)
+  - the wrapper script → `/usr/local/bin/skemos-security-run` (root:root,
+    `0755`)
+  - `security/systemd/*.{service,timer}` → `/etc/systemd/system/`
+    (root:root, `0644`), followed by `systemctl daemon-reload`
+  - `security/sudoers.d/skemos-security` → written to a temp file,
+    validated with `visudo -c -f <tmp>`, only then moved to
+    `/etc/sudoers.d/skemos-security` (root:root, `0440` — required exact
+    mode or `sudo` refuses to load it)
+  - `security/pacman-hooks/99-skemos-integrity-resync.hook` →
+    `/etc/pacman.d/hooks/` (root:root, `0644`)
+  - `security/audit-rules/skemos.rules` → `/etc/audit/rules.d/` (root:root,
+    `0640`), followed by `augenrules --load`
+  - `~/.local/state/skemos/security/` (summaries) and the user's own
+    `~/.config` clone stay user-writable, same as always — only the
+    **executed-as-root** artifacts get copied out to root-owned locations.
 
 ### C3. The panel UI
 `SUPER+S` → a floating, centered `foot` window (fixed size, ~70% of screen;
@@ -237,12 +265,17 @@ later if inbound SSH is ever turned on).
   offer, `skemos-security` group, sudoers.d install, systemd units install +
   enable, pacman hook install, audit rules install, ufw enable, git hooks
   wiring.
-- New `security/` directory (mirrors `bash/`, `waybar/` convention):
-  `security/scripts/{security-panel.sh,integrity-check.sh,
-  skemos-security-run}`, `security/systemd/*.{service,timer}`,
-  `security/sudoers.d/skemos-security`,
+- New `security/` directory (mirrors `bash/`, `waybar/` convention) — the
+  **source** of everything root-run; `bootstrap.sh` installs copies into
+  root-owned locations per the ownership rule in Part C2:
+  `security/scripts/{lib.sh,security-panel.sh,integrity-check.sh,
+  rkhunter-scan.sh,arch-audit-scan.sh,ufw-status.sh,audit-status.sh,
+  skemos-security-run}`, `security/systemd/*.{service,timer}` (5 services +
+  5 timers), `security/sudoers.d/skemos-security`,
   `security/pacman-hooks/99-skemos-integrity-resync.hook`,
-  `security/audit-rules/skemos.rules`.
+  `security/audit-rules/skemos.rules`. `security-panel.sh` is the one script
+  that runs unprivileged, as the user, from `SUPER+S` — it can stay run
+  directly from the repo checkout, no install-copy needed.
 - `.githooks/pre-commit` (new, `gitleaks`-backed).
 - `hypr/binds.lua` — `SUPER+S` bind.
 - `hypr/rules.lua` — floating window rule for the security panel.
