@@ -1,0 +1,9 @@
+## Skemos security — real-time auditd watch rules for sensitive paths.
+## This is a TEMPLATE: __SKEMOS_HOME__ is substituted for the real home
+## directory by bootstrap.sh (Task 14) before this is installed to
+## /etc/audit/rules.d/skemos.rules and loaded with `augenrules --load`.
+-w __SKEMOS_HOME__/.ssh -p wa -k skemos_ssh
+-w /etc/shadow -p wa -k skemos_shadow
+-w /etc/sudoers.d/ -p wa -k skemos_sudoers
+-w /etc/pacman.d/ -p wa -k skemos_pacman
+-w /etc/passwd -p wa -k skemos_passwd
