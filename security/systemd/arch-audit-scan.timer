@@ -1,0 +1,9 @@
+[Unit]
+Description=Skemos security — weekly arch-audit CVE check
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Skemos security — hourly auditd event snapshot
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

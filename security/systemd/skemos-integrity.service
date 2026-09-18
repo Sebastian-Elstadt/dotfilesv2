@@ -1,0 +1,6 @@
+[Unit]
+Description=Skemos security — file integrity check
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/skemos-security/integrity-check.sh

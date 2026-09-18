@@ -1,0 +1,6 @@
+[Unit]
+Description=Skemos security — arch-audit CVE check
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/skemos-security/arch-audit-scan.sh
