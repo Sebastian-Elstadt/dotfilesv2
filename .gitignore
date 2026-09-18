@@ -19,6 +19,8 @@
 !/gtk-3.0/
 !/gtk-4.0/
 !/docs/
+!/security/
+!/.githooks/
 
 # Within tracked dirs, still ignore obvious runtime/cache noise:
 **/*.log

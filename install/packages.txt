@@ -1,6 +1,15 @@
 # Skemos — package list (bare metal). One name per line, '#' comments ok.
 # Install:  install/bootstrap.sh   (or: sudo pacman -S --needed - < this, comments stripped)
 
+# Provenance policy: every package below comes from the official Arch
+# 'core'/'extra' repos. No AUR, no yay, no Hyprland plugins in this file or
+# in bootstrap.sh — ever. That's deliberate (supply-chain risk), not an
+# oversight. AUR software (yay, spotify, zed) is installed by hand and
+# stays outside this reproducible flow permanently.
+#
+# CPU microcode and NVIDIA packages are NOT listed here — bootstrap.sh
+# detects your hardware and adds them itself. See install/bootstrap.sh.
+
 # --- compositor + session ---
 hyprland                      # Wayland compositor (dwindle), Lua config
 uwsm                          # (optional) systemd-managed session; start-hyprland is the default launcher
@@ -42,6 +51,15 @@ noto-fonts                    # UTF-8 coverage fallback (no colour-emoji font on
 # --- cursor ---
 adwaita-cursors               # a real cursor theme (Wayland shows none without one)
 
+# --- security monitoring (SUPER+S panel — see SKEMOS.md "Security") -----
+ufw                            # firewall — enabled default-deny-incoming by bootstrap.sh
+audit                          # provides auditd: real-time watch rules on sensitive paths
+rkhunter                       # rootkit/backdoor signature scan
+arch-audit                     # checks installed packages against Arch's CVE tracker
+lynis                          # broader on-demand security posture audit (not automated)
+gitleaks                       # secret scanner — powers the pre-commit hook
+fzf                            # the security panel's row-action picker
+
 # --- audio (PipeWire — do NOT also install pulseaudio) ---
 pipewire
 pipewire-pulse
@@ -49,7 +67,10 @@ pipewire-alsa
 pipewire-jack
 wireplumber
 
-# --- networking / auth / vcs ---
+# --- vcs / dev essentials ---
+neovim                         # essential editor — always present, no exceptions
+openssh                        # ssh + sshd binaries. sshd is installed but
+                                # NEVER enabled by default (see INSTALL.md).
 networkmanager
 polkit
 git
@@ -60,18 +81,14 @@ openbsd-netcat                # `nc -U` — reads Hyprland's socket2 for the dra
 libnotify                     # notify-send
 brightnessctl                 # backlight keys (now functional on a real panel)
 playerctl                     # media keys (optional)
+less                            # pager — used by the security panel's log view
 
 # --- Wayland app integration ---
 qt5-wayland
 qt6-wayland
-
-# --- CPU microcode: install the ONE matching your CPU (uncomment) ---
-amd-ucode
-# intel-ucode
 
 # --- GPU ---------------------------------------------------------------------
 # mesa is always needed (GL loader + the AMD iGPU driver on this box).
 mesa
 # NVIDIA discrete card (RTX 5070). nvidia-open covers Turing+. See INSTALL.md §4
 # for the modeset / mkinitcpio / suspend-service / AQ_DRM_DEVICES steps.
-nvidia-open-dkms   linux-headers   egl-wayland
