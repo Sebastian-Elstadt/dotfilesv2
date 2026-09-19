@@ -149,11 +149,25 @@ build_frame() {
   local n=$(( rows - 2 )) line
   local -a lg=()
   mapfile -t lg < <(fetch_log "$job" "$n")
-  for ((i=0; i<n; i++)); do
-    line=${lg[i]:-}
+  # Hard-wrap every raw line to the pane width (continuations indented by 2),
+  # then show the last $n visual lines — short logs sit at the top.
+  local -a vl=() vc=()
+  local raw chunk
+  for raw in "${lg[@]}"; do
     color=$ink
-    case $line in *WARN*|*FAIL*|*Warning*|*ERROR*) color=$acc ;; esac
-    R[i+2]="${color} $(trunc "$line" "$rw")${rst}"
+    case $raw in *WARN*|*FAIL*|*Warning*|*ERROR*) color=$acc ;; esac
+    vl+=("${raw:0:rw}"); vc+=("$color")
+    raw=${raw:rw}
+    while [[ -n $raw ]]; do
+      vl+=("  ${raw:0:rw-2}"); vc+=("$color")
+      raw=${raw:rw-2}
+    done
+  done
+  local off=$(( ${#vl[@]} - n ))
+  (( off < 0 )) && off=0
+  for ((i=0; i<n; i++)); do
+    line=${vl[i+off]:-}
+    R[i+2]="${vc[i+off]:-$ink} ${line}${rst}"
   done
 
   # ---- join ---------------------------------------------------------------
