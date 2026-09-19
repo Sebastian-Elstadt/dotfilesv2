@@ -198,14 +198,20 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   current state). `lynis` is installed but deliberately **not** automated —
   run `sudo lynis audit system` by hand when you want its broader, long-form
   posture audit.
-- **`SUPER+S`** opens the panel (`security/scripts/security-panel.sh`, a
-  `foot` window). It reads `/var/log/skemos-security/*.summary.json` and asks
-  `systemctl is-active` for live state — busy/idle is correct regardless of
-  whether a job was started by its timer or by the panel, because both start
-  the *same* systemd unit. The table shows the 5 jobs numbered 1–5; press
-  `1`–`5` to select one, then an `fzf` menu offers "run now" / "view last log"
-  / "tail live" (`journalctl -u <unit> -f`, only while `RUNNING`); "run now"
-  starts in the background so the panel keeps refreshing; `q` quits.
+- **`SUPER+S`** toggles the panel (`security/scripts/security-toggle.sh` →
+  `security-panel.sh` in a `foot` window). It is fixed to the **left** edge —
+  900 px wide, full height, inset 12 px, pinned to every workspace — the mirror
+  of rofi on the right (placement is the `sk-security-panel` window rule in
+  `hypr/rules.lua`). Left column: the 5 jobs with status, last-run time and
+  live `RUNNING`/`IDLE`; right column: the selected job's log, running down the
+  full height. Keys: `j`/`k`/`↑`/`↓` or `1`–`5` select (the log follows the
+  selection, nothing else changes), `r` run now, `f` toggle the live journal
+  view (automatic while the job is `RUNNING`), `q`/`Esc` quit. State comes from
+  `/var/log/skemos-security/*.summary.json` plus one `systemctl is-active` —
+  busy/idle is correct whether a job was started by its timer or by the panel,
+  because both start the *same* systemd unit. **No flicker:** alternate screen,
+  one write per frame, only changed lines repainted (an idle panel writes
+  nothing). "Run now" starts in the background so the panel keeps refreshing.
 - **Privilege model / ownership rule**: `rkhunter` and `auditd` need root.
   Rather than blanket `sudo`, there's a `skemos-security` group (readable
   logs, no prompt) plus exactly one `/etc/sudoers.d/skemos-security`

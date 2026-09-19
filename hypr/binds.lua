@@ -37,12 +37,11 @@ hl.bind(mod .. " + P",              hl.dsp.window.pseudo())
 hl.bind(mod .. " + J",              hl.dsp.layout("togglesplit"))   -- dwindle
 
 -- ==== SECURITY PANEL ====================================================
--- SUPER+S opens the security dashboard: aggregated scan status, live
--- busy/idle per job, log viewing, and live-tail for anything running.
+-- SUPER+S toggles the security panel (fixed to the left edge, like rofi on the
+-- right): job list + live log pane. Placement rule lives in hypr/rules.lua.
 -- See SKEMOS.md "Security" and
 -- docs/superpowers/specs/2026-09-17-security-hardening-and-containment-design.md
-hl.bind(mod .. " + S", hl.dsp.exec_cmd(
-  "foot -a skemos-security -W 110x32 -T 'SKEMOS SECURITY' -e " .. SECURITY .. "/security-panel.sh"))
+hl.bind(mod .. " + S", hl.dsp.exec_cmd(SECURITY .. "/security-toggle.sh"))
 -- ==== end SECURITY PANEL =================================================
 
 -- ==== GROUP BARS — trial (added 2026-09-07) ==========================

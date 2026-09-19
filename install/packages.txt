@@ -58,7 +58,6 @@ rkhunter                       # rootkit/backdoor signature scan
 arch-audit                     # checks installed packages against Arch's CVE tracker
 lynis                          # broader on-demand security posture audit (not automated)
 gitleaks                       # secret scanner — powers the pre-commit hook
-fzf                            # the security panel's row-action picker
 
 # --- audio (PipeWire — do NOT also install pulseaudio) ---
 pipewire

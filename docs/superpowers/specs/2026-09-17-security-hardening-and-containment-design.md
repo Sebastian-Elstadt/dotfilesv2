@@ -337,3 +337,13 @@ later if inbound SSH is ever turned on).
   cost if wrong, not worth the complexity).
 - A waybar cell for security status — mentioned as a possible future nicety,
   not part of this pass.
+
+## Revision 2026-09-19 — SUPER+S panel redesign
+
+Supersedes the C-section panel layout above (table + `fzf` menu + `less`): the
+panel is now a left-edge fixed window (900 px, full height, pinned, toggled by
+`security-toggle.sh`) with the job list in a left column and the selected job's
+log in a right column. Selection shows the log in place; `r` runs, `f` toggles
+the live journal. Rendering is diff-based (alternate screen, changed lines
+only) to eliminate flicker. `fzf` is no longer used and was dropped from
+`packages.txt`. The privilege model is unchanged.

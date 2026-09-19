@@ -38,12 +38,17 @@ hl.window_rule({
   center = true,
 })
 
--- --- security panel: fixed-size, centered floating window ---------------
+-- --- security panel: fixed panel on the LEFT edge, mirror of rofi ------------
+-- 900px wide, full height below the waybar, inset 12px like rofi (gaps_out 10
+-- + 2px border). Pinned so it shows on every workspace; SUPER+S toggles it.
 hl.window_rule({
-  name   = "sk-security-panel",
-  match  = { class = "^skemos-security$" },
-  float  = true,
-  center = true,
+  name    = "sk-security-panel",
+  match   = { class = "^skemos-security$" },
+  float   = true,
+  pin     = true,
+  size    = "900 (monitor_h-46)",
+  move    = "12 34",
+  animation = "slide left",
 })
 
 -- --- special:minimized drawer: roomy, clearly a tray --------------------

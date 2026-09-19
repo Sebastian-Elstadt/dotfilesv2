@@ -213,7 +213,7 @@ systemctl --user status hyprpolkitagent
 | `SUPER`+`SPACE` | float / tile the active window |
 | `SUPER`+`M` / `SUPER`+`SHIFT`+`M` | minimize to drawer / toggle drawer |
 | `SUPER`+`L` | lock · `SUPER`+`SHIFT`+`E` logout |
-| `SUPER`+`S` | security panel — scan status, logs, live tail |
+| `SUPER`+`S` | security panel (left edge, toggles) — job status, live log pane |
 | `SUPER`+arrows / `SUPER`+`SHIFT`+arrows | move focus / move window |
 | `SUPER`+`1`‥`0` (+`SHIFT`) | workspace (move window) |
 | `SUPER`+`F` fullscreen · `SUPER`+`P` pseudo · `SUPER`+`J` split |
