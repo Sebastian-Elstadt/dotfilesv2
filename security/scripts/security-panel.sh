@@ -28,7 +28,7 @@ fnt=$'\e[38;2;85;81;74m';    acc=$'\e[38;2;193;102;58m'
 rst=$'\e[0m'
 
 live_state() {
-  local st; st=$(systemctl is-active "${UNIT[$1]}" 2>/dev/null || echo inactive)
+  local st; st=$(systemctl is-active "${UNIT[$1]}" 2>/dev/null); st=${st:-inactive}
   [[ $st == active || $st == activating ]] && echo RUNNING || echo IDLE
 }
 
@@ -71,7 +71,7 @@ tail live"
     --color="bg+:#34322d,fg+:#e5e1d6,fg:#9a948a,prompt:#c1663a") || return 0
   case "$choice" in
     "run now")
-      sudo /usr/local/bin/skemos-security-run "$job"
+      sudo /usr/local/bin/skemos-security-run "$job" >/dev/null 2>&1 &
       ;;
     "view last log")
       if [[ -r "/var/log/skemos-security/$job.log" ]]; then
