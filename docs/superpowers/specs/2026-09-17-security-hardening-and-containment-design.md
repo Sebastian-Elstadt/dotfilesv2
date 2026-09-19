@@ -218,7 +218,7 @@ palette + box-drawing consistent with `bash/skemos.bash`'s banner) running
 ### C4. What's watched / scanned
 - **`skemos-integrity`** (home-grown, no new package — the direct answer to
   "a worm modified something via/around the package manager"): a curated
-  path list (core system binaries — `sh`, `bash`, `sudo`, `ssh`, `pacman`,
+  path list (core system binaries — `bash`, `sudo`, `ssh`, `pacman`,
   `systemd`; shell rc files; `/etc/passwd`, `/etc/sudoers`,
   `/etc/pacman.conf`, `/etc/pacman.d/hooks/`; this repo's own `hypr/*.lua`)
   gets `sha256`-hashed into a baseline at `/var/lib/skemos-security/

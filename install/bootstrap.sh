@@ -25,7 +25,7 @@ SK_HOME="$(getent passwd "$(id -u)" | cut -d: -f6 || true)"
 if [[ ! $SK_USER =~ ^[a-z_][a-z0-9_-]*$ ]]; then
   echo "bootstrap: refusing unusual username '$SK_USER'" >&2; exit 1
 fi
-if [[ $SK_HOME != /* || $SK_HOME == *[[:space:]]* ]]; then
+if [[ $SK_HOME != /* || $SK_HOME == *[[:space:]]* || $SK_HOME == *\\* ]]; then
   echo "bootstrap: refusing unusual home directory '$SK_HOME'" >&2; exit 1
 fi
 [[ $SK_HOME == "$HOME" ]] || echo "bootstrap: note — \$HOME ($HOME) differs from the passwd home ($SK_HOME); using the passwd home for system config." >&2
@@ -37,7 +37,8 @@ SK_HOME_SED="$(printf '%s' "$SK_HOME" | sed 's/[&|\\]/\\&/g')"
 # step — make sure it is there (official repo, tiny).
 if ! command -v lspci >/dev/null 2>&1; then
   say "lspci not found — installing pciutils for hardware detection."
-  sudo pacman -S --needed pciutils
+  sudo pacman -S --needed pciutils \
+    || { echo "bootstrap: could not install pciutils (run 'sudo pacman -Sy pciutils' then re-run)" >&2; exit 1; }
 fi
 PCI_OUT="$(lspci -nn || true)"
 
@@ -103,7 +104,8 @@ if [[ -n $gpu_pkgs ]]; then
     say '    MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)'
     read -r -p "  Open it in \$EDITOR now? [y/N] " a
     if [[ $a == y || $a == Y ]]; then
-      SUDO_EDITOR="${EDITOR:-vi}" sudoedit "$MKINITCPIO"
+      SUDO_EDITOR="${EDITOR:-${VISUAL:-/usr/bin/nvim}}" sudoedit "$MKINITCPIO" \
+        || say "  editor failed — edit $MKINITCPIO by hand, then run 'sudo mkinitcpio -P'."
       say "  'mkinitcpio -P' rewrites the initramfs image(s) in /boot (on systemd-boot layouts /boot is the ESP)."
       read -r -p "  Run 'sudo mkinitcpio -P' now (needed for the change to take effect)? [y/N] " b
       [[ $b == y || $b == Y ]] && sudo mkinitcpio -P
@@ -272,7 +274,7 @@ sudo rkhunter --propupd || true
 
 # timers last, so none of them can race the seed above
 for t in skemos-integrity rkhunter-scan arch-audit-scan ufw-status audit-status; do
-  sudo systemctl enable --now "$t.timer"
+  sudo systemctl enable --now "$t.timer" || say "  could not enable $t.timer — check 'systemctl status $t.timer'"
 done
 
 say "Security tooling installed. Log out/in once for the skemos-security group to take effect."
