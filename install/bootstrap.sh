@@ -165,4 +165,74 @@ if ! grep -q 'bash/skemos.bash' "$HOME/.bashrc" 2>/dev/null; then
   } >> "$HOME/.bashrc"
 fi
 
+# 10. security tooling ---------------------------------------------------
+say "Installing Skemos security tooling (systemd units, sudoers rule, pacman hook)."
+
+SEC_SRC="$HERE/../security"
+
+# group + per-machine config
+if ! getent group skemos-security >/dev/null; then
+  sudo groupadd skemos-security
+fi
+sudo usermod -aG skemos-security "$USER"
+
+sudo tee /etc/skemos-security.conf >/dev/null <<EOF
+SKEMOS_USER=$USER
+SKEMOS_HOME=$HOME
+EOF
+
+# job scripts + shared lib -> root-owned, not user-writable
+sudo install -d -o root -g root -m 0755 /usr/local/lib/skemos-security
+sudo install -o root -g root -m 0755 \
+  "$SEC_SRC/scripts/lib.sh" \
+  "$SEC_SRC/scripts/integrity-check.sh" \
+  "$SEC_SRC/scripts/rkhunter-scan.sh" \
+  "$SEC_SRC/scripts/arch-audit-scan.sh" \
+  "$SEC_SRC/scripts/ufw-status.sh" \
+  "$SEC_SRC/scripts/audit-status.sh" \
+  /usr/local/lib/skemos-security/
+
+# dispatcher wrapper -> /usr/local/bin (the sudoers Cmnd target)
+sudo install -o root -g root -m 0755 "$SEC_SRC/scripts/skemos-security-run" /usr/local/bin/skemos-security-run
+
+# systemd units
+sudo install -o root -g root -m 0644 "$SEC_SRC"/systemd/*.service "$SEC_SRC"/systemd/*.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+for t in skemos-integrity rkhunter-scan arch-audit-scan ufw-status audit-status; do
+  sudo systemctl enable --now "$t.timer"
+done
+
+# sudoers (template substitution, validated before install)
+tmp_sudoers="$(mktemp)"
+sed "s/__SKEMOS_USER__/$USER/g" "$SEC_SRC/sudoers.d/skemos-security" > "$tmp_sudoers"
+if sudo visudo -c -f "$tmp_sudoers" >/dev/null 2>&1; then
+  sudo install -o root -g root -m 0440 "$tmp_sudoers" /etc/sudoers.d/skemos-security
+  say "  sudoers rule installed."
+else
+  say "  sudoers template failed validation — NOT installed. Check $tmp_sudoers."
+fi
+rm -f "$tmp_sudoers"
+
+# pacman hook
+sudo install -d -o root -g root -m 0755 /etc/pacman.d/hooks
+sudo install -o root -g root -m 0644 "$SEC_SRC/pacman-hooks/99-skemos-integrity-resync.hook" /etc/pacman.d/hooks/
+
+# audit rules (template substitution)
+sudo install -d -o root -g root -m 0750 /etc/audit/rules.d
+sed "s|__SKEMOS_HOME__|$HOME|g" "$SEC_SRC/audit-rules/skemos.rules" | sudo tee /etc/audit/rules.d/skemos.rules >/dev/null
+sudo chmod 0640 /etc/audit/rules.d/skemos.rules
+sudo systemctl enable --now auditd.service
+sudo augenrules --load
+
+# ufw — default deny incoming, allow outgoing
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw --force enable
+
+# first-run initialization so the panel's first view isn't just "baseline created"
+sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline
+sudo rkhunter --propupd || true
+
+say "Security tooling installed. Log out/in once for the skemos-security group to take effect."
+
 say "Done. Verify with 'Hyprland --verify-config', then log out and log back in."
