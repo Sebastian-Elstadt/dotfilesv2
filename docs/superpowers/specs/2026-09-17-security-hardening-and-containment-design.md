@@ -134,10 +134,10 @@ paired `.timer`. All five follow the identical pattern (three actually
 - Live output: `journalctl -u <unit> -f`. History: `journalctl -u <unit>
   --since ...`. No hand-rolled PID/lock-file tracking anywhere — systemd
   and journald already are that state store.
-- Each service, on completion, writes two things as its logged-in user
-  (not root — see C2 for how): a full-detail log at
-  `/var/log/skemos-security/<job>.log`, and a small summary at
-  `~/.local/state/skemos/security/<job>.summary.json`:
+- Each service, on completion, writes two things, both into the root-owned
+  `/var/log/skemos-security/` (see C2 for why never into the user's home): a
+  full-detail log at `<job>.log`, and a small summary at
+  `<job>.summary.json`:
   `{"last_run": "<ISO8601>", "status": "ok|warn|fail", "detail": "<short
   string>"}`. The dashboard reads only the summaries for its table (fast,
   structured) and the full logs on drill-down (`[l]`).
@@ -150,11 +150,15 @@ mostly don't but stay in the same uniform pattern for consistency.
   `bootstrap.sh`.
 - `/var/log/skemos-security/` is `root:skemos-security`, mode `750`; each
   `<job>.log` inside is `640`. Every wrapper (which runs as root, being a
-  systemd system service) writes there and to the user's own
-  `~/.local/state/skemos/security/` (ownership set correctly at write time —
-  the wrapper is generated for this specific single-user machine, matching
-  the rest of the rice's single-user assumptions). **Reading any log or
-  summary, ever, needs no privilege prompt.**
+  systemd system service) writes both the logs and the
+  `<job>.summary.json` files there (`root:skemos-security`, `640`). Root
+  **never writes to, chowns, or creates anything inside a user-owned
+  directory**: a user-controlled path handed to a root process is a symlink
+  attack (plant a symlink at the expected filename, root overwrites and
+  chowns its target — root escalation). The user only *reads*, via group
+  membership. **Reading any log or summary, ever, needs no privilege
+  prompt.** (Found in review of Task 14, 2026-09-18; the original design
+  wrote summaries into `~/.local/state/skemos/security/`.)
 - Exactly **one** narrow `/etc/sudoers.d/skemos-security` rule: `NOPASSWD`
   for a single fixed wrapper, `/usr/local/bin/skemos-security-run
   <jobname>`, which only accepts one of the 5 known job names as its sole
@@ -188,8 +192,8 @@ mostly don't but stay in the same uniform pattern for consistency.
     `/etc/pacman.d/hooks/` (root:root, `0644`)
   - `security/audit-rules/skemos.rules` → `/etc/audit/rules.d/` (root:root,
     `0640`), followed by `augenrules --load`
-  - `~/.local/state/skemos/security/` (summaries) and the user's own
-    `~/.config` clone stay user-writable, same as always — only the
+  - The user's own `~/.config` clone stays user-writable, same as always
+    (root never writes into the user's home) — only the
     **executed-as-root** artifacts get copied out to root-owned locations.
 
 ### C3. The panel UI

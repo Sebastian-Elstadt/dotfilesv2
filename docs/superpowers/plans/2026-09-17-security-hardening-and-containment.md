@@ -434,7 +434,7 @@ SKEMOS_SECURITY_CONF="/etc/skemos-security.conf"
 : "${SKEMOS_HOME:?SKEMOS_HOME not set — run install/bootstrap.sh first}"
 
 SK_LOG_DIR="/var/log/skemos-security"
-SK_STATE_DIR="$SKEMOS_HOME/.local/state/skemos/security"
+SK_STATE_DIR="/var/log/skemos-security"
 
 sk_log_path()     { echo "$SK_LOG_DIR/$1.log"; }
 sk_summary_path() { echo "$SK_STATE_DIR/$1.summary.json"; }
@@ -1119,7 +1119,7 @@ gracefully (warns, doesn't block) if gitleaks isn't installed yet."
 - Create: `security/scripts/security-panel.sh` (executable)
 
 **Interfaces:**
-- Consumes: `~/.local/state/skemos/security/<job>.summary.json` (written by
+- Consumes: `/var/log/skemos-security/<job>.summary.json` (written by
   every job script via `sk_write_summary`), `systemctl is-active
   <unit>.service`, `sudo /usr/local/bin/skemos-security-run <job>`,
   `journalctl -u <unit>.service -f`, `/var/log/skemos-security/<job>.log`.
@@ -1136,7 +1136,7 @@ gracefully (warns, doesn't block) if gitleaks isn't installed yet."
 # /etc/sudoers.d/skemos-security (Task 10/14).
 set -uo pipefail
 
-STATE_DIR="$HOME/.local/state/skemos/security"
+STATE_DIR="/var/log/skemos-security"
 JOBS=(integrity rkhunter arch-audit ufw-status audit-status)
 declare -A UNIT=(
   [integrity]=skemos-integrity.service
@@ -1240,11 +1240,10 @@ Expected: no output.
 - [ ] **Step 3: Manual dry-run against synthetic state (no root, no installed units needed)**
 
 ```sh
-mkdir -p ~/.local/state/skemos/security
-cat > ~/.local/state/skemos/security/integrity.summary.json <<'EOF'
+cat > /var/log/skemos-security/integrity.summary.json <<'EOF'
 {"last_run":"2026-09-17T12:00:00+00:00","status":"ok","detail":"no changes"}
 EOF
-cat > ~/.local/state/skemos/security/rkhunter.summary.json <<'EOF'
+cat > /var/log/skemos-security/rkhunter.summary.json <<'EOF'
 {"last_run":"2026-09-17T09:00:00+00:00","status":"warn","detail":"2 warning(s) — see log"}
 EOF
 bash security/scripts/security-panel.sh
@@ -1252,7 +1251,7 @@ bash security/scripts/security-panel.sh
 # Press Esc to back out, then press 2 and confirm rkhunter shows WARN in
 # accent color with a "2 warning(s)..." detail visible via jq if inspected
 # directly. Press q to quit.
-rm -f ~/.local/state/skemos/security/{integrity,rkhunter}.summary.json
+rm -f /var/log/skemos-security/{integrity,rkhunter}.summary.json
 ```
 Expected: the table renders with box-drawing matching the rest of the rice,
 row 1 shows `INTEGRITY OK ... IDLE`, row 2 shows `RKHUNTER WARN ... IDLE` in
@@ -1497,7 +1496,7 @@ next"):
   when you want its broader, long-form posture audit.
 - **`SUPER+S`** opens the panel (`security/scripts/security-panel.sh`, a
   `foot` window, `fzf` for the per-row action menu). It reads
-  `~/.local/state/skemos/security/*.summary.json` and asks `systemctl
+  `/var/log/skemos-security/*.summary.json` and asks `systemctl
   is-active` for live state — busy/idle is correct regardless of whether a
   job was started by its timer or by the panel, because both start the
   *same* systemd unit. `[r]` run now, `[l]` last log, `[t]` tail live
@@ -1669,7 +1668,7 @@ systemctl is-active rkhunter-scan.service   # expect: active or activating
 journalctl -u rkhunter-scan.service -f      # Ctrl-C once you see output flowing
 wait
 systemctl is-active rkhunter-scan.service   # expect: inactive (finished)
-cat ~/.local/state/skemos/security/rkhunter.summary.json   # expect valid JSON, ok or warn
+cat /var/log/skemos-security/rkhunter.summary.json   # expect valid JSON, ok or warn
 ```
 
 - [ ] **Step 5: Trigger a deliberate integrity WARN and confirm the pacman-hook resync clears it**
@@ -1679,9 +1678,9 @@ sudo touch /etc/passwd   # updates mtime; sha256 unchanged, so this alone won't 
 # instead, append a harmless trailing newline to actually change the hash:
 sudo tee -a /etc/passwd <<< "" >/dev/null
 sudo /usr/local/lib/skemos-security/integrity-check.sh
-cat ~/.local/state/skemos/security/integrity.summary.json   # expect status: warn
+cat /var/log/skemos-security/integrity.summary.json   # expect status: warn
 sudo pacman -Syu --needed jq   # any real transaction — triggers the pacman hook
-cat ~/.local/state/skemos/security/integrity.summary.json   # expect status: ok, "baseline refreshed"
+cat /var/log/skemos-security/integrity.summary.json   # expect status: ok, "baseline refreshed"
 ```
 (If `/etc/passwd` already ends in a blank line, pick any other watched,
 low-risk file to append a byte to instead — the point is proving a
