@@ -240,7 +240,9 @@ paint() {
   fi
   for ((i=0; i<rows; i++)); do
     if [[ ${NEW[i]:-} != "${PREV[i]:-}" ]]; then
-      buf+=$'\e['$((i+1))';1H'"${NEW[i]:-}"$'\e[K'
+      # no \e[K: every row is exactly `cols` wide, and with autowrap off the
+      # cursor rests ON the last cell, so an erase-to-EOL would wipe the border
+      buf+=$'\e['$((i+1))';1H'"${NEW[i]:-}"
       PREV[i]=${NEW[i]:-}
     fi
   done

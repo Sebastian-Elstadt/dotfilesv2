@@ -200,7 +200,7 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   posture audit.
 - **`SUPER+S`** toggles the panel (`security/scripts/security-toggle.sh` →
   `security-panel.sh` in a `foot` window). It is fixed to the **left** edge —
-  900 px wide, full height, inset 12 px, pinned to every workspace — the mirror
+  960 px wide, full height, inset 12 px, pinned to every workspace — the mirror
   of rofi on the right (placement is the `sk-security-panel` window rule in
   `hypr/rules.lua`). Left panel: the 5 jobs with status, last-run time and
   live `RUNNING`/`IDLE`; right panel: the selected job's log, running down the
