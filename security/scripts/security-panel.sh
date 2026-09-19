@@ -48,6 +48,10 @@ declare -A STATUS WHEN LIVE
 selected=0
 follow=0          # 1 = show the unit's journal even when idle
 msg=""; msg_until=0
+# "clear" only moves what the panel shows; nothing on disk changes. Per job:
+# journal lines older than CLEAR_TS and file lines up to CLEAR_LN are hidden.
+declare -A CLEAR_TS CLEAR_LN
+VIS_FILE=$(mktemp "${XDG_RUNTIME_DIR:-/tmp}/skemos-panel.XXXXXX")   # visible raw lines, for `y`
 declare -a PREV=()
 full=1
 
@@ -74,15 +78,41 @@ refresh_state() {
 }
 
 # Last $2 lines of the selected job's log, sanitised. Short logs sit at the top.
+# Anything hidden by `c` (clear view) stays hidden; new output shows up.
 fetch_log() {
-  local job=$1 n=$2
+  local job=$1 n=$2 skip=${CLEAR_LN[$1]:-0} total
   if [[ $follow == 1 || ${LIVE[$job]} == RUNNING ]]; then
-    journalctl -u "${UNIT[$job]}" -n "$n" --no-pager -o cat 2>/dev/null
+    local -a a=(-u "${UNIT[$job]}" -n "$n" --no-pager -o cat)
+    [[ -n ${CLEAR_TS[$job]:-} ]] && a+=(--since "@${CLEAR_TS[$job]}")
+    journalctl "${a[@]}" 2>/dev/null | sed -e '/^-- No entries --$/d'
   elif [[ -r $LOG_DIR/$job.log ]]; then
-    tail -n "$n" "$LOG_DIR/$job.log" 2>/dev/null
-  else
+    total=$(wc -l < "$LOG_DIR/$job.log")
+    (( total < skip )) && skip=0          # log was replaced/rotated
+    tail -n +$((skip+1)) "$LOG_DIR/$job.log" 2>/dev/null | tail -n "$n"
+  elif [[ -z ${CLEAR_TS[$job]:-} ]]; then
     echo "no log yet for $job"
   fi | LC_ALL=C tr '\t' ' ' | LC_ALL=C tr -d '\000-\010\013-\037\177'
+}
+
+clear_view() {
+  local job=$1
+  local f=$LOG_DIR/$job.log
+  CLEAR_TS[$job]=$(date +%s)
+  CLEAR_LN[$job]=0
+  [[ -r $f ]] && CLEAR_LN[$job]=$(wc -l < "$f")
+}
+
+copy_view() {
+  local n
+  n=$(wc -l < "$VIS_FILE")
+  if (( n == 0 )); then
+    msg="nothing to copy"
+  elif command -v wl-copy >/dev/null 2>&1 && wl-copy < "$VIS_FILE" >/dev/null 2>&1; then
+    msg="copied $n line(s)"
+  else
+    msg="copy failed (wl-copy?)"
+  fi
+  msg_until=$(( $(date +%s) + 3 ))
 }
 
 padr() {  # padr "text" width — pad by characters (printf pads by bytes)
@@ -132,7 +162,7 @@ build_frame() {
   done
   while (( r < rows )); do L[r]=$(printf '%*s' "$LW" ''); ((r++)); done
   # footer hints, pinned to the bottom of the left column
-  local -a hints=("j/k      select" "1-5      jump" "r        run now" "f        live journal" "q        quit")
+  local -a hints=("j/k      select" "1-5      jump" "r        run now" "f        live journal" "c        clear view" "y        copy log" "q        quit")
   local h=${#hints[@]} k
   for k in "${!hints[@]}"; do
     L[rows-h+k]="${dim}$(padr " ${hints[k]}" "$LW")${rst}"
@@ -144,6 +174,7 @@ build_frame() {
   # ---- right column -----------------------------------------------------
   local mode="LAST LOG"
   [[ $follow == 1 || ${LIVE[$job]} == RUNNING ]] && mode="LIVE"
+  [[ -n ${CLEAR_TS[$job]:-} ]] && mode+=" · CLEARED"
   R[0]="${ink} ${LABEL[$job]} · ${STATUS[$job]} · ${mode}${rst}"
   R[1]="${fnt}$(printf '─%.0s' $(seq 1 $((rw+2))))${rst}"
   local n=$(( rows - 2 )) line
@@ -151,23 +182,31 @@ build_frame() {
   mapfile -t lg < <(fetch_log "$job" "$n")
   # Hard-wrap every raw line to the pane width (continuations indented by 2),
   # then show the last $n visual lines — short logs sit at the top.
-  local -a vl=() vc=()
-  local raw chunk
-  for raw in "${lg[@]}"; do
+  local -a vl=() vc=() vr=()
+  local raw ri
+  for ri in "${!lg[@]}"; do
+    raw=${lg[ri]}
     color=$ink
     case $raw in *WARN*|*FAIL*|*Warning*|*ERROR*) color=$acc ;; esac
-    vl+=("${raw:0:rw}"); vc+=("$color")
+    vl+=("${raw:0:rw}"); vc+=("$color"); vr+=("$ri")
     raw=${raw:rw}
     while [[ -n $raw ]]; do
-      vl+=("  ${raw:0:rw-2}"); vc+=("$color")
+      vl+=("  ${raw:0:rw-2}"); vc+=("$color"); vr+=("$ri")
       raw=${raw:rw-2}
     done
   done
+  if (( ${#vl[@]} == 0 )) && [[ -n ${CLEAR_TS[$job]:-} ]]; then
+    vl=("cleared — waiting for output"); vc=("$dim"); vr=(-1)
+  fi
   local off=$(( ${#vl[@]} - n ))
   (( off < 0 )) && off=0
+  local last=-1
+  : > "$VIS_FILE"
   for ((i=0; i<n; i++)); do
     line=${vl[i+off]:-}
     R[i+2]="${vc[i+off]:-$ink} ${line}${rst}"
+    ri=${vr[i+off]:--1}
+    if (( ri >= 0 && ri != last )); then printf '%s\n' "${lg[ri]}" >> "$VIS_FILE"; last=$ri; fi
   done
 
   # ---- join ---------------------------------------------------------------
@@ -211,7 +250,7 @@ run_job() {
   msg="starting ${LABEL[$job]}…"; msg_until=$(( $(date +%s) + 3 ))
 }
 
-cleanup() { printf '\e[?25h\e[?1049l'; }
+cleanup() { rm -f "$VIS_FILE"; printf '\e[?25h\e[?1049l'; }
 trap cleanup EXIT
 trap 'full=1' WINCH
 printf '\e[?1049h\e[?25l'
@@ -234,7 +273,9 @@ while true; do
       j) (( selected < ${#JOBS[@]}-1 )) && ((selected++)) ;;
       k) (( selected > 0 )) && ((selected--)) ;;
       [1-5]) selected=$((key-1)) ;;
-      r) run_job "${JOBS[$selected]}" ;;
+      r) clear_view "${JOBS[$selected]}"; run_job "${JOBS[$selected]}" ;;
+      c) clear_view "${JOBS[$selected]}" ;;
+      y) copy_view ;;
       f) follow=$(( 1 - follow )) ;;
     esac
   fi

@@ -205,8 +205,11 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   `hypr/rules.lua`). Left column: the 5 jobs with status, last-run time and
   live `RUNNING`/`IDLE`; right column: the selected job's log, running down the
   full height. Keys: `j`/`k`/`↑`/`↓` or `1`–`5` select (the log follows the
-  selection, nothing else changes), `r` run now, `f` toggle the live journal
-  view (automatic while the job is `RUNNING`), `q`/`Esc` quit. State comes from
+  selection, nothing else changes), `r` run now (clears that job's view first, so you see just that run),
+  `c` clear the view (display only — nothing on disk changes; reopening the
+  panel restores it), `y` copy the visible log to the clipboard (original,
+  unwrapped lines, via `wl-copy`), `f` toggle the live journal view (automatic
+  while the job is `RUNNING`), `q`/`Esc` quit. State comes from
   `/var/log/skemos-security/*.summary.json` plus one `systemctl is-active` —
   busy/idle is correct whether a job was started by its timer or by the panel,
   because both start the *same* systemd unit. **No flicker:** alternate screen,
