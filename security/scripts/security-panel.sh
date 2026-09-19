@@ -8,6 +8,9 @@
 # No flicker: alternate screen, one write per frame, and only lines whose
 # content changed since the last frame are repainted (an idle panel writes
 # nothing). The screen is never cleared after the first paint.
+#
+# Two outlined panels; ←/→ moves focus. Tools focused: ↑/↓ select a tool.
+# Logs focused: ↑/↓ scroll. The mouse wheel always scrolls the logs.
 set -uo pipefail
 
 LOG_DIR="/var/log/skemos-security"
@@ -46,12 +49,18 @@ rst=$'\e[0m'
 # per-job data, refreshed every tick
 declare -A STATUS WHEN LIVE
 selected=0
+focus=0           # 0 = tools panel, 1 = logs panel
+TOP=-1            # first visible visual line of the log; -1 = follow the newest
 follow=0          # 1 = show the unit's journal even when idle
 msg=""; msg_until=0
 # "clear" only moves what the panel shows; nothing on disk changes. Per job:
 # journal lines older than CLEAR_TS and file lines up to CLEAR_LN are hidden.
 declare -A CLEAR_TS CLEAR_LN
 VIS_FILE=$(mktemp "${XDG_RUNTIME_DIR:-/tmp}/skemos-panel.XXXXXX")   # visible raw lines, for `y`
+META_FILE="$VIS_FILE.meta"                                           # "total_lines page_rows top", for scrolling
+printf -v HBAR '%*s' 400 ''; HBAR=${HBAR// /─}
+printf -v BLANK '%*s' 400 ''
+MAXLOG=1000       # raw log lines loaded, so there is history to scroll
 declare -a PREV=()
 full=1
 
@@ -128,61 +137,52 @@ trunc() {  # trunc "text" width
 
 build_frame() {
   local cols=$1 rows=$2
-  local rw=$(( cols - LW - 3 ))
-  (( rw < 10 )) && rw=10
+  local lbw=$(( LW + 2 ))                 # left box width, borders included
+  local rbw=$(( cols - lbw ))             # right box width, borders included
+  local iw=$(( rbw - 2 ))                 # right inner width
+  (( iw < 14 )) && iw=14
+  local rw=$(( iw - 2 ))                  # log text width (1 col padding each side)
+  local n=$(( rows - 2 ))                 # content rows inside the boxes
   local job=${JOBS[$selected]}
-  local -a L=()   # left cells, index = row-1
-  local -a R=()   # right cells
-  local i j text color live
+  local lb=$fnt rb=$fnt
+  (( focus == 0 )) && lb=$ink || rb=$ink  # bright outline = focused panel
+  local -a L=() R=()
+  local i j c text color live mk
 
-  # ---- left column ------------------------------------------------------
-  L[0]="${ink}$(padr " SKEMOS SECURITY" "$LW")${rst}"
-  L[1]="${fnt}$(printf '─%.0s' $(seq 1 "$LW"))${rst}"
-  local r=2
+  # ---- left cells (each exactly LW wide) -----------------------------------
+  for ((c=0; c<n; c++)); do L[c]=${BLANK:0:LW}; done
   for j in "${!JOBS[@]}"; do
     local jb=${JOBS[$j]}
     live=${LIVE[$jb]}
     color=$dim
     [[ ${STATUS[$jb]} == WARN || ${STATUS[$jb]} == FAIL || $live == RUNNING ]] && color=$acc
-    text=$(printf ' %d  %-*s %s' $((j+1)) 12 "${LABEL[$jb]}" "$live")
+    mk=" "; (( j == selected && focus == 1 )) && mk="▸"
+    printf -v text '%s%d  %-*s %s' "$mk" $((j+1)) 12 "${LABEL[$jb]}" "$live"
     text=$(padr "$text" "$LW")
-    if (( j == selected )); then
-      L[r]="${sel}${text}${rst}"
-    else
-      L[r]="${ink}${text}${rst}"
-    fi
-    ((r++))
-    text=$(printf '    %-6s %s' "${STATUS[$jb]}" "${WHEN[$jb]}")
-    L[r]="${color}$(padr "$text" "$LW")${rst}"
-    ((r++))
-    L[r]="${dim}$(padr "    $(trunc "${DESC[$jb]}" $((LW-5)))" "$LW")${rst}"
-    ((r++))
-    L[r]=$(printf '%*s' "$LW" '')
-    ((r++))
+    c=$(( 1 + 4*j ))
+    if (( j == selected && focus == 0 )); then L[c]="${sel}${text}${rst}"; else L[c]="${ink}${text}${rst}"; fi
+    printf -v text '    %-6s %s' "${STATUS[$jb]}" "${WHEN[$jb]}"
+    L[c+1]="${color}$(padr "$text" "$LW")${rst}"
+    L[c+2]="${dim}$(padr "    $(trunc "${DESC[$jb]}" $((LW-5)))" "$LW")${rst}"
   done
-  while (( r < rows )); do L[r]=$(printf '%*s' "$LW" ''); ((r++)); done
-  # footer hints, pinned to the bottom of the left column
-  local -a hints=("j/k      select" "1-5      jump" "r        run now" "f        live journal" "c        clear view" "y        copy log" "q        quit")
+  local -a hints
+  if (( focus == 0 )); then
+    hints=("↑/↓ j/k  select tool" "1-5      jump to tool" "→        focus logs")
+  else
+    hints=("↑/↓ j/k  scroll" "PgUp/PgDn page" "^u/^d    half page" "g/G      oldest/newest" "←        focus tools")
+  fi
+  hints+=("r        run now" "f        live journal" "c        clear view" "y        copy log" "q        quit")
   local h=${#hints[@]} k
   for k in "${!hints[@]}"; do
-    L[rows-h+k]="${dim}$(padr " ${hints[k]}" "$LW")${rst}"
+    L[n-h+k]="${dim}$(padr " ${hints[k]}" "$LW")${rst}"
   done
   if (( $(date +%s) < msg_until )); then
-    L[rows-h-1]="${acc}$(padr " $(trunc "$msg" $((LW-2)))" "$LW")${rst}"
+    L[n-h-1]="${acc}$(padr " $(trunc "$msg" $((LW-2)))" "$LW")${rst}"
   fi
 
-  # ---- right column -----------------------------------------------------
-  local mode="LAST LOG"
-  [[ $follow == 1 || ${LIVE[$job]} == RUNNING ]] && mode="LIVE"
-  [[ -n ${CLEAR_TS[$job]:-} ]] && mode+=" · CLEARED"
-  R[0]="${ink} ${LABEL[$job]} · ${STATUS[$job]} · ${mode}${rst}"
-  R[1]="${fnt}$(printf '─%.0s' $(seq 1 $((rw+2))))${rst}"
-  local n=$(( rows - 2 )) line
-  local -a lg=()
-  mapfile -t lg < <(fetch_log "$job" "$n")
-  # Hard-wrap every raw line to the pane width (continuations indented by 2),
-  # then show the last $n visual lines — short logs sit at the top.
-  local -a vl=() vc=() vr=()
+  # ---- log lines: load history, wrap, pick the visible window ---------------
+  local -a lg=() vl=() vc=() vr=()
+  mapfile -t lg < <(fetch_log "$job" "$MAXLOG")
   local raw ri
   for ri in "${!lg[@]}"; do
     raw=${lg[ri]}
@@ -198,21 +198,34 @@ build_frame() {
   if (( ${#vl[@]} == 0 )) && [[ -n ${CLEAR_TS[$job]:-} ]]; then
     vl=("cleared — waiting for output"); vc=("$dim"); vr=(-1)
   fi
-  local off=$(( ${#vl[@]} - n ))
-  (( off < 0 )) && off=0
-  local last=-1
+  local total=${#vl[@]} max off
+  max=$(( total - n )); (( max < 0 )) && max=0
+  if (( TOP >= 0 )); then off=$TOP; (( off > max )) && off=$max; else off=$max; fi
+  printf '%s %s %s\n' "$total" "$n" "$off" > "$META_FILE"
+
+  local last=-1 line pad
   : > "$VIS_FILE"
-  for ((i=0; i<n; i++)); do
-    line=${vl[i+off]:-}
-    R[i+2]="${vc[i+off]:-$ink} ${line}${rst}"
-    ri=${vr[i+off]:--1}
+  for ((c=0; c<n; c++)); do
+    line=${vl[c+off]:-}
+    pad=$(( iw - 1 - ${#line} )); (( pad < 0 )) && pad=0
+    R[c]="${vc[c+off]:-$ink} ${line}${BLANK:0:pad}${rst}"
+    ri=${vr[c+off]:--1}
     if (( ri >= 0 && ri != last )); then printf '%s\n' "${lg[ri]}" >> "$VIS_FILE"; last=$ri; fi
   done
 
-  # ---- join ---------------------------------------------------------------
-  for ((i=0; i<rows; i++)); do
-    printf '%s%s│%s%s\n' "${L[i]:-}" "$fnt" "$rst" "${R[i]:-}"
+  # ---- borders + join ---------------------------------------------------------
+  local mode="LAST LOG"
+  [[ $follow == 1 || ${LIVE[$job]} == RUNNING ]] && mode="LIVE"
+  [[ -n ${CLEAR_TS[$job]:-} ]] && mode+=" · CLEARED"
+  (( TOP >= 0 && off < max )) && mode+=" · SCROLLED (G = latest)"
+  local lt=" SKEMOS SECURITY " rt
+  rt=$(trunc " ${LABEL[$job]} · ${STATUS[$job]} · ${mode} " $((iw-1)))
+  printf '%s┌─%s%s┐%s┌─%s%s┐%s\n' "$lb" "$lt" "${HBAR:0:lbw-3-${#lt}}" \
+    "$rb" "$rt" "${HBAR:0:rbw-3-${#rt}}" "$rst"
+  for ((c=0; c<n; c++)); do
+    printf '%s│%s%s%s│%s│%s%s%s│%s\n' "$lb" "$rst" "${L[c]}" "$lb" "$rb" "$rst" "${R[c]}" "$rb" "$rst"
   done
+  printf '%s└%s┘%s└%s┘%s\n' "$lb" "${HBAR:0:lbw-2}" "$rb" "${HBAR:0:rbw-2}" "$rst"
 }
 
 paint() {
@@ -250,33 +263,74 @@ run_job() {
   msg="starting ${LABEL[$job]}…"; msg_until=$(( $(date +%s) + 3 ))
 }
 
-cleanup() { rm -f "$VIS_FILE"; printf '\e[?25h\e[?1049l'; }
-trap cleanup EXIT
-trap 'full=1' WINCH
-printf '\e[?1049h\e[?25l'
+# Scroll the log by <dir>(-1 up / 1 down) x <amount>(lines | half | page).
+# TOP stays put while new lines arrive; reaching the bottom resumes following.
+scroll_by() {
+  local dir=$1 amt=$2 total n max off step
+  read -r total n _ < "$META_FILE" 2>/dev/null || return 0
+  max=$(( total - n )); (( max <= 0 )) && return 0
+  case $amt in page) step=$(( n - 1 )) ;; half) step=$(( n / 2 )) ;; *) step=$amt ;; esac
+  if (( TOP >= 0 )); then off=$TOP; else off=$max; fi
+  off=$(( off + dir * step ))
+  (( off < 0 )) && off=0
+  if (( off >= max )); then TOP=-1; else TOP=$off; fi
+}
 
+move_sel() {
+  local new=$(( selected + $1 ))
+  (( new < 0 || new >= ${#JOBS[@]} )) && return 0
+  selected=$new; TOP=-1
+}
+
+cleanup() { rm -f "$VIS_FILE" "$META_FILE"; printf '\e[?1006l\e[?1000l\e[?7h\e[?25h\e[?1049l'; }
+trap cleanup EXIT
+trap 'full=1; TOP=-1' WINCH
+# alt screen, hidden cursor, no autowrap, SGR mouse reporting (wheel scrolls logs
+# instead of the terminal turning it into arrow keys)
+printf '\e[?1049h\e[?25l\e[?7l\e[?1000h\e[?1006h'
+
+last_refresh=-1
 while true; do
-  refresh_state
-  paint
+  if (( SECONDS != last_refresh )); then refresh_state; last_refresh=$SECONDS; fi
+  read -t 0 || paint          # while input is queued (wheel bursts), skip the repaint
   if read -rsn1 -t 1 key; then
     if [[ $key == $'\e' ]]; then
-      read -rsn2 -t 0.05 rest || rest=""
-      case "$rest" in
-        '[A') key=k ;;
-        '[B') key=j ;;
-        "")   key=q ;;      # bare Esc quits
-        *)    key="" ;;
+      seq=""
+      while read -rsn1 -t 0.05 c; do
+        seq+=$c
+        [[ $seq == O ]] && continue                      # SS3: one more char follows
+        [[ $c == [A-Za-z~] && $seq != "[" ]] && break    # CSI final byte
+        (( ${#seq} > 24 )) && break
+      done
+      case "$seq" in
+        '[A'|OA) key=UP ;;    '[B'|OB) key=DOWN ;;
+        '[C'|OC) key=RIGHT ;; '[D'|OD) key=LEFT ;;
+        '[5~') key=PGUP ;;    '[6~') key=PGDN ;;
+        '[H'|OH|'[1~') key=HOME ;; '[F'|OF|'[4~') key=END ;;
+        '[<64;'*M) key=WUP ;; '[<65;'*M) key=WDN ;;
+        "") key=q ;;          # bare Esc quits
+        *)  key="" ;;         # clicks, other sequences: ignore
       esac
     fi
     case "$key" in
       q) exit 0 ;;
-      j) (( selected < ${#JOBS[@]}-1 )) && ((selected++)) ;;
-      k) (( selected > 0 )) && ((selected--)) ;;
-      [1-5]) selected=$((key-1)) ;;
-      r) clear_view "${JOBS[$selected]}"; run_job "${JOBS[$selected]}" ;;
-      c) clear_view "${JOBS[$selected]}" ;;
+      UP|k)   if (( focus == 0 )); then move_sel -1; else scroll_by -1 1; fi ;;
+      DOWN|j) if (( focus == 0 )); then move_sel 1;  else scroll_by 1 1;  fi ;;
+      LEFT)  focus=0 ;;
+      RIGHT) focus=1 ;;
+      WUP) scroll_by -1 3 ;;
+      WDN) scroll_by 1 3 ;;
+      PGUP)  (( focus == 1 )) && scroll_by -1 page ;;
+      PGDN)  (( focus == 1 )) && scroll_by 1 page ;;
+      $'\x15') (( focus == 1 )) && scroll_by -1 half ;;
+      $'\x04') (( focus == 1 )) && scroll_by 1 half ;;
+      HOME|g) (( focus == 1 )) && TOP=0 ;;
+      END|G)  (( focus == 1 )) && TOP=-1 ;;
+      [1-5]) selected=$((key-1)); TOP=-1 ;;
+      r) clear_view "${JOBS[$selected]}"; TOP=-1; run_job "${JOBS[$selected]}" ;;
+      c) clear_view "${JOBS[$selected]}"; TOP=-1 ;;
       y) copy_view ;;
-      f) follow=$(( 1 - follow )) ;;
+      f) follow=$(( 1 - follow )); TOP=-1 ;;
     esac
   fi
 done

@@ -202,10 +202,17 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   `security-panel.sh` in a `foot` window). It is fixed to the **left** edge —
   900 px wide, full height, inset 12 px, pinned to every workspace — the mirror
   of rofi on the right (placement is the `sk-security-panel` window rule in
-  `hypr/rules.lua`). Left column: the 5 jobs with status, last-run time and
-  live `RUNNING`/`IDLE`; right column: the selected job's log, running down the
-  full height. Keys: `j`/`k`/`↑`/`↓` or `1`–`5` select (the log follows the
-  selection, nothing else changes), `r` run now (clears that job's view first, so you see just that run),
+  `hypr/rules.lua`). Left panel: the 5 jobs with status, last-run time and
+  live `RUNNING`/`IDLE`; right panel: the selected job's log, running down the
+  full height, in two outlined panels (bright outline = focused). Keys: `←`/`→`
+  switch focus between tools and logs. Tools focused: `↑`/`↓`/`j`/`k` or `1`–`5`
+  select a tool. Logs focused: `↑`/`↓`/`j`/`k` scroll a line, `PgUp`/`PgDn` a
+  page, `^u`/`^d` half a page, `g`/`G` (or `Home`/`End`) oldest/newest. The mouse
+  wheel always scrolls the logs (the panel captures the mouse, so plain
+  click-drag select is off — Shift-drag still works, or use `y`). The last 1000
+  lines are loaded; scrolling up pins the view while new output arrives, and
+  reaching the bottom (or switching tool / `c` / `r`) resumes following.
+  `r` run now (clears that job's view first, so you see just that run),
   `c` clear the view (display only — nothing on disk changes; reopening the
   panel restores it), `y` copy the visible log to the clipboard (original,
   unwrapped lines, via `wl-copy`), `f` toggle the live journal view (automatic
