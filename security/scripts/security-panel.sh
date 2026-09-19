@@ -5,7 +5,7 @@
 # /etc/sudoers.d/skemos-security (Task 10/14).
 set -uo pipefail
 
-STATE_DIR="$HOME/.local/state/skemos/security"
+STATE_DIR="/var/log/skemos-security"
 JOBS=(integrity rkhunter arch-audit ufw-status audit-status)
 declare -A UNIT=(
   [integrity]=skemos-integrity.service

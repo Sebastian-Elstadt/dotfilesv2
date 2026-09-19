@@ -11,10 +11,9 @@ SKEMOS_SECURITY_CONF="/etc/skemos-security.conf"
 : "${SKEMOS_HOME:?SKEMOS_HOME not set — run install/bootstrap.sh first}"
 
 SK_LOG_DIR="/var/log/skemos-security"
-SK_STATE_DIR="$SKEMOS_HOME/.local/state/skemos/security"
 
 sk_log_path()     { echo "$SK_LOG_DIR/$1.log"; }
-sk_summary_path() { echo "$SK_STATE_DIR/$1.summary.json"; }
+sk_summary_path() { echo "$SK_LOG_DIR/$1.summary.json"; }
 
 # sk_write_log <job> <text...> — appends a timestamped block to the job's
 # group-readable log.
@@ -29,16 +28,23 @@ sk_write_log() {
   chmod 0640 "$(sk_log_path "$job")"
 }
 
-# sk_write_summary <job> <status: ok|warn|fail> <detail> — overwrites the
-# job's small JSON summary (what the panel's table reads) and notifies on
-# warn/fail regardless of what triggered this run (see plan header).
+# sk_write_summary <job> <status: ok|warn|fail> <detail> — atomically
+# replaces the job's small JSON summary (what the panel's table reads) and
+# notifies on warn/fail regardless of what triggered this run (see plan
+# header). The summary lives in the root-owned log dir next to the logs
+# (root:skemos-security 0640); root never writes into a user-owned directory.
 sk_write_summary() {
   local job=$1 status=$2 detail=$3
-  install -d -o "$SKEMOS_USER" -g "$SKEMOS_USER" -m 0700 "$SK_STATE_DIR"
+  install -d -o root -g skemos-security -m 0750 "$SK_LOG_DIR"
   local ts; ts=$(date -Is)
+  local final tmp
+  final=$(sk_summary_path "$job")
+  tmp=$(mktemp "$SK_LOG_DIR/.summary.XXXXXX")
   printf '{"last_run":"%s","status":"%s","detail":"%s"}\n' \
-    "$ts" "$status" "${detail//\"/\\\"}" > "$(sk_summary_path "$job")"
-  chown "$SKEMOS_USER:$SKEMOS_USER" "$(sk_summary_path "$job")"
+    "$ts" "$status" "${detail//\"/\\\"}" > "$tmp"
+  chown root:skemos-security "$tmp"
+  chmod 0640 "$tmp"
+  mv -f "$tmp" "$final"
   if [[ $status == warn || $status == fail ]]; then
     sk_notify "Skemos security: $job" "$detail"
   fi

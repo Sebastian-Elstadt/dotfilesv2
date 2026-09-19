@@ -5,9 +5,11 @@
 #
 #     ~/.config/install/bootstrap.sh
 #
-# Does only: pacman install, enable PipeWire + NetworkManager, font cache,
-# append the Hyprland launch line to ~/.bash_profile, source the Skemos shell
-# dressing from ~/.bashrc.
+# Does only: hardware detection, pacman install, enable PipeWire +
+# NetworkManager, font cache, SSH key offer, git-hook wiring, append the
+# Hyprland launch line to ~/.bash_profile, source the Skemos shell dressing
+# from ~/.bashrc, and install the security tooling (root-owned copies,
+# systemd timers, sudoers rule, pacman hook, audit rules, ufw).
 # Does NOT touch disks, the ESP, the bootloader, or enable autologin.
 
 set -euo pipefail
@@ -176,10 +178,9 @@ if ! getent group skemos-security >/dev/null; then
 fi
 sudo usermod -aG skemos-security "$USER"
 
-sudo tee /etc/skemos-security.conf >/dev/null <<EOF
-SKEMOS_USER=$USER
-SKEMOS_HOME=$HOME
-EOF
+# (lib.sh sources this as root, so values are shell-quoted with %q)
+printf 'SKEMOS_USER=%q\nSKEMOS_HOME=%q\n' "$USER" "$HOME" \
+  | sudo install -o root -g root -m 0644 /dev/stdin /etc/skemos-security.conf
 
 # job scripts + shared lib -> root-owned, not user-writable
 sudo install -d -o root -g root -m 0755 /usr/local/lib/skemos-security
@@ -202,16 +203,17 @@ for t in skemos-integrity rkhunter-scan arch-audit-scan ufw-status audit-status;
   sudo systemctl enable --now "$t.timer"
 done
 
-# sudoers (template substitution, validated before install)
-tmp_sudoers="$(mktemp)"
-sed "s/__SKEMOS_USER__/$USER/g" "$SEC_SRC/sudoers.d/skemos-security" > "$tmp_sudoers"
-if sudo visudo -c -f "$tmp_sudoers" >/dev/null 2>&1; then
+# sudoers (template substitution, validated before install; staged in a
+# root-owned temp file so it is never user-writable between check and install)
+tmp_sudoers="$(sudo mktemp)"
+sed "s/__SKEMOS_USER__/$USER/g" "$SEC_SRC/sudoers.d/skemos-security" | sudo tee "$tmp_sudoers" >/dev/null
+if sudo visudo -c -f "$tmp_sudoers"; then
   sudo install -o root -g root -m 0440 "$tmp_sudoers" /etc/sudoers.d/skemos-security
   say "  sudoers rule installed."
 else
-  say "  sudoers template failed validation — NOT installed. Check $tmp_sudoers."
+  say "  sudoers template failed validation — NOT installed (see visudo output above)."
 fi
-rm -f "$tmp_sudoers"
+sudo rm -f "$tmp_sudoers"
 
 # pacman hook
 sudo install -d -o root -g root -m 0755 /etc/pacman.d/hooks
@@ -219,8 +221,7 @@ sudo install -o root -g root -m 0644 "$SEC_SRC/pacman-hooks/99-skemos-integrity-
 
 # audit rules (template substitution)
 sudo install -d -o root -g root -m 0750 /etc/audit/rules.d
-sed "s|__SKEMOS_HOME__|$HOME|g" "$SEC_SRC/audit-rules/skemos.rules" | sudo tee /etc/audit/rules.d/skemos.rules >/dev/null
-sudo chmod 0640 /etc/audit/rules.d/skemos.rules
+sed "s|__SKEMOS_HOME__|$HOME|g" "$SEC_SRC/audit-rules/skemos.rules" | sudo install -o root -g root -m 0640 /dev/stdin /etc/audit/rules.d/skemos.rules
 sudo systemctl enable --now auditd.service
 sudo augenrules --load
 
