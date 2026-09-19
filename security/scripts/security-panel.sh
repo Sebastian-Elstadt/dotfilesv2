@@ -27,7 +27,15 @@ declare -A LABEL=(
   [audit-status]="AUDITD"
 )
 
-LW=32          # left column width (chars)
+declare -A DESC=(
+  [integrity]="Detects changes to watched system files"
+  [rkhunter]="Scans for rootkits and known malware"
+  [arch-audit]="Lists installed packages with known CVEs"
+  [ufw-status]="Checks the firewall is active"
+  [audit-status]="Flags changes to ssh, sudo, passwd files"
+)
+
+LW=46          # left column width (chars)
 
 # palette — mirrors hypr/colors.lua / bash/skemos.bash
 ink=$'\e[38;2;229;225;214m'; dim=$'\e[38;2;154;148;138m'
@@ -116,6 +124,8 @@ build_frame() {
     ((r++))
     text=$(printf '    %-6s %s' "${STATUS[$jb]}" "${WHEN[$jb]}")
     L[r]="${color}$(padr "$text" "$LW")${rst}"
+    ((r++))
+    L[r]="${dim}$(padr "    $(trunc "${DESC[$jb]}" $((LW-5)))" "$LW")${rst}"
     ((r++))
     L[r]=$(printf '%*s' "$LW" '')
     ((r++))
