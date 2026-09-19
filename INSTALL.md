@@ -75,13 +75,20 @@ $EDITOR ~/.config/install/packages.txt
 ~/.config/install/bootstrap.sh
 ```
 
-`bootstrap.sh` runs `sudo pacman -Syu --needed` on the list, enables PipeWire +
-NetworkManager, rebuilds the font cache (fetching Departure Mono into
-`~/.local/share/fonts` if it is not already installed), appends the Hyprland
-launch line to `~/.bash_profile`, and sources the Skemos shell dressing (prompt
-+ login banner) from `~/.bashrc`. It never touches disks, the ESP, the
-bootloader, or autologin. Review it before running — it is the only privileged
-step.
+`bootstrap.sh` auto-detects your CPU vendor and GPU (adding microcode and,
+if NVIDIA is present, the NVIDIA package set automatically — no more
+hand-editing `packages.txt`), then runs `sudo pacman -Syu --needed` on the
+combined list. It enables PipeWire + NetworkManager, rebuilds the font
+cache (fetching Departure Mono into `~/.local/share/fonts`, checksum-
+verified, if not already installed), offers to generate an SSH keypair if
+you don't have one, wires the `gitleaks` pre-commit hook, appends the
+Hyprland launch line to `~/.bash_profile`, sources the Skemos shell
+dressing from `~/.bashrc`, and installs the security-monitoring tooling
+(systemd units, a scoped sudoers rule, a pacman hook, audit rules — see
+`SKEMOS.md` "Security"). Any NVIDIA kernel-module/initramfs/nouveau-
+blacklist change is shown to you and asks before touching `/etc`. It never
+touches disks, the ESP, the bootloader, or autologin. Review it before
+running — it is the only privileged step.
 
 ### Boot straight into the schematic lock screen
 
@@ -198,6 +205,7 @@ systemctl --user status hyprpolkitagent
 | `SUPER`+`SPACE` | float / tile the active window |
 | `SUPER`+`M` / `SUPER`+`SHIFT`+`M` | minimize to drawer / toggle drawer |
 | `SUPER`+`L` | lock · `SUPER`+`SHIFT`+`E` logout |
+| `SUPER`+`S` | security panel — scan status, logs, live tail |
 | `SUPER`+arrows / `SUPER`+`SHIFT`+arrows | move focus / move window |
 | `SUPER`+`1`‥`0` (+`SHIFT`) | workspace (move window) |
 | `SUPER`+`F` fullscreen · `SUPER`+`P` pseudo · `SUPER`+`J` split |
@@ -230,3 +238,26 @@ If it was enabled on this machine, undo it:
 hyprpm disable borders-plus-plus
 hyprpm remove hyprland-plugins     # optional
 ```
+
+---
+
+## 10 · Security
+
+`bootstrap.sh` installs a small self-monitoring layer: a daily file-
+integrity check, weekly `rkhunter` + `arch-audit` scans, hourly `ufw`/
+`auditd` status snapshots, all operable from `SUPER+S`. See `SKEMOS.md`
+"Security" for the full model and
+`docs/superpowers/specs/2026-09-17-security-hardening-and-containment-design.md`
+for the design rationale.
+
+A few things worth knowing on a fresh install:
+- You'll be added to a new `skemos-security` group — **log out and back in**
+  once for that to take effect (group membership doesn't apply to an
+  already-running session).
+- `sshd` is installed but never auto-enabled. If you turn on inbound SSH
+  (`sudo systemctl enable --now sshd`), also add `sudo ufw allow ssh` and
+  consider adding `fail2ban` (not installed by default — nothing to guard
+  while `sshd` is off).
+- `sudo lynis audit system` is available any time for a deeper, on-demand
+  posture check — it's installed but intentionally not wired into the
+  automated/notified flow (its output is long-form, better read directly).

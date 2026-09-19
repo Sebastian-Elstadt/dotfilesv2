@@ -78,6 +78,10 @@ banner (once per terminal — parent-process check, since SHLVL is 2+ for every
 terminal under the single login shell). Sourced from `~/.bashrc` (NOT in the
 repo; `bootstrap.sh` adds the line). `SKEMOS_BANNER=0` drops the banner.
 
+`security/` (scripts, systemd units, sudoers/pacman-hook/audit-rule
+templates — source of truth for the SUPER+S panel; installed root-owned by
+`bootstrap.sh`, see "Security" below).
+
 ---
 
 ## Look — decisions made
@@ -156,6 +160,60 @@ repo; `bootstrap.sh` adds the line). `SKEMOS_BANNER=0` drops the banner.
   (per-edge halign/valign is buggy — #516/#744; `shape` borders render filled —
   #458). `SK-01` + `SKEMOS` tags. Test/preview with
   `hyprlock --grace 999 --verbose` then `grim` then `pkill hyprlock`.
+
+## Security — decisions made
+
+- **Threat model is supply-chain, not full OS hardening**: the concern is a
+  compromised package/AUR-helper/plugin, not disk encryption (declined) or
+  a compliance framework (none targeted). The repo stays **public**
+  (declined making it private) — the `gitleaks` pre-commit hook
+  (`.githooks/pre-commit`, wired via `git config core.hooksPath`) is the
+  safety net for that.
+- **Official-repos-only policy**: `packages.txt` + `bootstrap.sh` install
+  only from Arch `core`/`extra`. No AUR, no `yay`, no Hyprland plugins in
+  that flow, ever — `yay`/`spotify`/`zed` stay hand-installed, outside it.
+- **5 self-monitoring jobs**, each a systemd oneshot `.service` + `.timer`
+  pair, installed root-owned by `bootstrap.sh` from the `security/` source
+  directory (never executed from `~/.config` directly — see the ownership
+  note below): `skemos-integrity` (daily, home-grown hash-baseline FIM —
+  `aide` is AUR-only so this is hand-rolled; a pacman hook re-baselines
+  after every real transaction, so a WARN means something changed outside
+  one), `rkhunter-scan` (weekly, rootkit/backdoor signatures),
+  `arch-audit-scan` (weekly, known-CVE exposure in installed packages),
+  `ufw-status` / `audit-status` (hourly snapshots — `ufw` and `auditd` are
+  always-on, these just surface current state). `lynis` is installed but
+  deliberately **not** automated — run `sudo lynis audit system` by hand
+  when you want its broader, long-form posture audit.
+- **`SUPER+S`** opens the panel (`security/scripts/security-panel.sh`, a
+  `foot` window, `fzf` for the per-row action menu). It reads
+  `/var/log/skemos-security/*.summary.json` and asks `systemctl
+  is-active` for live state — busy/idle is correct regardless of whether a
+  job was started by its timer or by the panel, because both start the
+  *same* systemd unit. `[r]` run now, `[l]` last log, `[t]` tail live
+  (`journalctl -u <unit> -f`, only offered while `RUNNING`).
+- **Privilege model / ownership rule**: `rkhunter` and `auditd` need root.
+  Rather than blanket `sudo`, there's a `skemos-security` group (readable
+  logs, no prompt) plus exactly one `/etc/sudoers.d/skemos-security`
+  NOPASSWD rule scoped to one fixed wrapper
+  (`/usr/local/bin/skemos-security-run <jobname>`, 5-name hardcoded
+  allowlist). **Everything that rule or a systemd system service executes
+  is installed by `bootstrap.sh` into a root-owned, not-user-writable
+  location** — the `security/` copies in this repo are the editable
+  source; nothing there is ever run directly, because a user-writable
+  script behind a passwordless sudo rule is an instant root escalation.
+  Edit the repo, re-run `bootstrap.sh`, to update any of it.
+- **Root never writes into a user-owned directory** — a root job that writes
+  or chowns a file inside a directory the user controls is a symlink-attack
+  root escalation (user plants a symlink at the expected filename; root
+  overwrites and chowns the target). That is why summaries sit beside the
+  logs in `/var/log/skemos-security/` rather than in `~/.local/state`. Found
+  in review on 2026-09-18.
+- **Declined**: `opensnitch` (interactive per-connection popups — exactly
+  the friction/bloat this pass was trying to avoid), `fail2ban` (nothing to
+  protect while `sshd` stays disabled by default — add it if you ever
+  enable inbound SSH).
+
+Full design: `docs/superpowers/specs/2026-09-17-security-hardening-and-containment-design.md`.
 
 ## Open / next
 
