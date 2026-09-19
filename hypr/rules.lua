@@ -38,6 +38,14 @@ hl.window_rule({
   center = true,
 })
 
+-- --- security panel: fixed-size, centered floating window ---------------
+hl.window_rule({
+  name   = "sk-security-panel",
+  match  = { class = "^skemos-security$" },
+  float  = true,
+  center = true,
+})
+
 -- --- special:minimized drawer: roomy, clearly a tray --------------------
 hl.workspace_rule({ workspace = "special:minimized", gaps_in = 10, gaps_out = 44 })
 

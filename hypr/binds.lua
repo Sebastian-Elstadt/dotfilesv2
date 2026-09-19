@@ -6,7 +6,8 @@ require("alttab")   -- ALT+TAB / ALT+SHIFT+TAB — MRU window walk
 
 local mod   = "SUPER"
 local HOME  = os.getenv("HOME")
-local SCRIPTS = HOME .. "/.config/hypr/scripts"
+local SCRIPTS  = HOME .. "/.config/hypr/scripts"
+local SECURITY = HOME .. "/.config/security/scripts"
 
 -- Terminal: foot on the VM. METAL: change this one word to "kitty" and reload.
 local terminal = "foot"
@@ -34,6 +35,15 @@ hl.bind(mod .. " + F",              hl.dsp.window.fullscreen({ action = "toggle"
 hl.bind(mod .. " + SHIFT + F",      hl.dsp.window.fullscreen({ action = "toggle", mode = "maximized" }))
 hl.bind(mod .. " + P",              hl.dsp.window.pseudo())
 hl.bind(mod .. " + J",              hl.dsp.layout("togglesplit"))   -- dwindle
+
+-- ==== SECURITY PANEL ====================================================
+-- SUPER+S opens the security dashboard: aggregated scan status, live
+-- busy/idle per job, log viewing, and live-tail for anything running.
+-- See SKEMOS.md "Security" and
+-- docs/superpowers/specs/2026-09-17-security-hardening-and-containment-design.md
+hl.bind(mod .. " + S", hl.dsp.exec_cmd(
+  "foot -a skemos-security -W 110x32 -T 'SKEMOS SECURITY' -e " .. SECURITY .. "/security-panel.sh"))
+-- ==== end SECURITY PANEL =================================================
 
 -- ==== GROUP BARS — trial (added 2026-09-07) ==========================
 -- SUPER+G       fold the focused window into / out of a group (tab stack)
