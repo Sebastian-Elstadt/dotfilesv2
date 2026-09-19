@@ -69,8 +69,8 @@ git branch --set-upstream-to=origin/master master
 ## 3 · Packages + system setup
 
 ```sh
-# Edit first if you have NVIDIA or want kitty as default (see §5):
-$EDITOR ~/.config/install/packages.txt
+# Optional: review the list first (choosing kitty is a §5 config choice, not a package edit).
+less ~/.config/install/packages.txt
 
 ~/.config/install/bootstrap.sh
 ```
@@ -83,9 +83,11 @@ cache (fetching Departure Mono into `~/.local/share/fonts`, checksum-
 verified, if not already installed), offers to generate an SSH keypair if
 you don't have one, wires the `gitleaks` pre-commit hook, appends the
 Hyprland launch line to `~/.bash_profile`, sources the Skemos shell
-dressing from `~/.bashrc`, and installs the security-monitoring tooling
-(systemd units, a scoped sudoers rule, a pacman hook, audit rules — see
-`SKEMOS.md` "Security"). Any NVIDIA kernel-module/initramfs/nouveau-
+dressing from `~/.bashrc`, enables `ufw` with default-deny-incoming /
+allow-outgoing, enables `auditd` with watch rules for `~/.ssh`, `/etc/shadow`,
+`/etc/sudoers.d`, `/etc/pacman.d`, and `/etc/passwd`, and installs the
+security-monitoring tooling (systemd units, a scoped sudoers rule, a pacman
+hook, audit rules — see `SKEMOS.md` "Security"). Any NVIDIA kernel-module/initramfs/nouveau-
 blacklist change is shown to you and asks before touching `/etc`. It never
 touches disks, the ESP, the bootloader, or autologin. Review it before
 running — it is the only privileged step.
@@ -120,7 +122,11 @@ that matters, skip this and keep the text login. To undo:
 
 - **AMD / Intel only** — `mesa` (in the list) is all you need.
 - **NVIDIA** — reference <https://wiki.hypr.land/Nvidia/>. What `saber`
-  (RTX 5070, `nvidia-open` 610) actually runs, all confirmed working:
+  (RTX 5070, `nvidia-open` 610) actually runs, all confirmed working. (Note:
+  steps 1, 3, 4, and 5 below — packages, mkinitcpio, nouveau blacklist, and
+  suspend/resume services — are now automated/prompted by `bootstrap.sh`; step
+  2, kernel cmdline, and step 6, `AQ_DRM_DEVICES` primary-GPU pin, remain
+  manual.)
 
   1. Packages: `mesa nvidia-open-dkms nvidia-utils linux-headers egl-wayland`
      (`mesa` stays — the box also has an AMD iGPU).
@@ -254,6 +260,10 @@ A few things worth knowing on a fresh install:
 - You'll be added to a new `skemos-security` group — **log out and back in**
   once for that to take effect (group membership doesn't apply to an
   already-running session).
+- `ufw` is turned on with default-deny-incoming / allow-outgoing, and `auditd`
+  is enabled with watch rules for `~/.ssh`, `/etc/shadow`, `/etc/sudoers.d`,
+  `/etc/pacman.d`, and `/etc/passwd` — both tracked by hourly status snapshots
+  in the `SUPER+S` panel.
 - `sshd` is installed but never auto-enabled. If you turn on inbound SSH
   (`sudo systemctl enable --now sshd`), also add `sudo ufw allow ssh` and
   consider adding `fail2ban` (not installed by default — nothing to guard

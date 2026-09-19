@@ -175,22 +175,29 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
 - **5 self-monitoring jobs**, each a systemd oneshot `.service` + `.timer`
   pair, installed root-owned by `bootstrap.sh` from the `security/` source
   directory (never executed from `~/.config` directly — see the ownership
-  note below): `skemos-integrity` (daily, home-grown hash-baseline FIM —
-  `aide` is AUR-only so this is hand-rolled; a pacman hook re-baselines
-  after every real transaction, so a WARN means something changed outside
-  one), `rkhunter-scan` (weekly, rootkit/backdoor signatures),
-  `arch-audit-scan` (weekly, known-CVE exposure in installed packages),
-  `ufw-status` / `audit-status` (hourly snapshots — `ufw` and `auditd` are
-  always-on, these just surface current state). `lynis` is installed but
-  deliberately **not** automated — run `sudo lynis audit system` by hand
-  when you want its broader, long-form posture audit.
+  note below): `skemos-integrity` (daily, home-grown hash-baseline FIM — a
+  curated watchlist including core binaries, `/etc/passwd`/`/etc/sudoers`/
+  `/etc/pacman.conf`/`/etc/pacman.d/hooks`, your `.bashrc`/`.bash_profile`,
+  and `hypr/hyprland.lua`/`hypr/binds.lua`/`hypr/look.lua`; hand-editing any
+  of those rice files makes it WARN until the next pacman transaction or you
+  manually rebaseline with `sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline`;
+  `aide` is AUR-only so this is hand-rolled), `rkhunter-scan` (weekly,
+  rootkit/backdoor signatures), `arch-audit-scan` (weekly, known-CVE exposure
+  in installed packages), `ufw-status` / `audit-status` (hourly snapshots —
+  `bootstrap.sh` turns on `ufw` with default-deny-incoming / allow-outgoing
+  and enables `auditd` with watch rules for `~/.ssh`, `/etc/shadow`,
+  `/etc/sudoers.d`, `/etc/pacman.d`, `/etc/passwd`; these jobs just surface
+  current state). `lynis` is installed but deliberately **not** automated —
+  run `sudo lynis audit system` by hand when you want its broader, long-form
+  posture audit.
 - **`SUPER+S`** opens the panel (`security/scripts/security-panel.sh`, a
-  `foot` window, `fzf` for the per-row action menu). It reads
-  `/var/log/skemos-security/*.summary.json` and asks `systemctl
-  is-active` for live state — busy/idle is correct regardless of whether a
-  job was started by its timer or by the panel, because both start the
-  *same* systemd unit. `[r]` run now, `[l]` last log, `[t]` tail live
-  (`journalctl -u <unit> -f`, only offered while `RUNNING`).
+  `foot` window). It reads `/var/log/skemos-security/*.summary.json` and asks
+  `systemctl is-active` for live state — busy/idle is correct regardless of
+  whether a job was started by its timer or by the panel, because both start
+  the *same* systemd unit. The table shows the 5 jobs numbered 1–5; press
+  `1`–`5` to select one, then an `fzf` menu offers "run now" / "view last log"
+  / "tail live" (`journalctl -u <unit> -f`, only while `RUNNING`); "run now"
+  starts in the background so the panel keeps refreshing; `q` quits.
 - **Privilege model / ownership rule**: `rkhunter` and `auditd` need root.
   Rather than blanket `sudo`, there's a `skemos-security` group (readable
   logs, no prompt) plus exactly one `/etc/sudoers.d/skemos-security`
