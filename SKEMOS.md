@@ -244,6 +244,16 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   source; nothing there is ever run directly, because a user-writable
   script behind a passwordless sudo rule is an instant root escalation.
   Edit the repo, re-run `bootstrap.sh`, to update any of it.
+- **audit-status digests events.** `ausearch` prints several raw records per
+  event and the job used to WARN on any watched-path activity all day —
+  including its own setup (`auditctl` loading the rules) and every pacman
+  transaction (`gpg` refreshing the keyring's `trustdb.gpg`). It now groups
+  records into events, ignores exactly those two routine sources, and flags
+  everything else (other keyring files such as `pubring.kbx`, `sudoers.d`,
+  `passwd`, `~/.ssh`, audit-rule changes by anything but `auditctl`) as one
+  readable line each: time, program, uid/auid, path. An `ausearch` failure is
+  now a FAIL, not "no events". The window is still "today", so a real event
+  keeps the WARN until midnight.
 - **arch-audit acknowledgements.** `arch-audit` compares installed packages to
   Arch's security tracker, and the tracker holds records that were never closed
   (status "Vulnerable"/"Unknown", no fixed version) for CVEs from 2020-2025
