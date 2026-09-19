@@ -286,4 +286,8 @@ if (( ! sudoers_ok )); then
   say "WARNING: sudoers rule NOT installed — SUPER+S run-now will not work until fixed."
 fi
 
+# 12. Claude Code (optional, prompted; a documented exception to
+# official-repos-only — see install/claude-code.sh) -----------------------
+"$HERE/claude-code.sh" || say "Claude Code step did not complete (non-fatal)."
+
 say "Done. Verify with 'Hyprland --verify-config', then log out and log back in."

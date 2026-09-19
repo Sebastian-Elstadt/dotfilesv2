@@ -281,6 +281,33 @@ A few things worth knowing on a fresh install:
   posture check — it's installed but intentionally not wired into the
   automated/notified flow (its output is long-form, better read directly).
 
+### Claude Code (optional) — "analyze with Claude"
+
+`bootstrap.sh` ends by asking `Install Claude Code? [y/N]` (default **No**,
+skipped on non-interactive runs). Claude Code is **not** in the official Arch
+repos, so this is the one deliberate exception to "official repos only": it
+runs Anthropic's own installer, downloaded to a file (never piped to a shell),
+as you, into `~/.local` — no sudo, no npm, no AUR. The installer checks the
+binary against a checksum manifest from the same host, which catches a
+corrupted download but not a compromised origin. **Answer N on any machine
+where sending data to an external AI service is not allowed.**
+
+Install by hand later (read it first, then run it):
+
+```sh
+curl -fsSL https://claude.ai/install.sh -o /tmp/claude-install.sh
+less /tmp/claude-install.sh && bash /tmp/claude-install.sh   # then run `claude` once to sign in
+```
+
+Once `claude` is installed and signed in, the `SUPER+S` panel enables `a`
+(*analyze with Claude*): it snapshots the selected tool's log into a private
+tmpfs directory, opens a new terminal that shows what will be sent, and only
+after you press **Enter** starts a Claude session that can *only read* those
+two files (`--tools "Read,Grep,Glob"` — no shell, no edits, no web, no MCP).
+Claude recommends commands; you run them yourself. The log (hostnames, paths,
+hashes, firewall/audit events) goes to Anthropic under your account, and the
+temp directory is deleted when the terminal closes.
+
 **Without the panel** (plain shell, no `SUPER+S`):
 
 ```sh

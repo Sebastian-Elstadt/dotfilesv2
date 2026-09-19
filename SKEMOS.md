@@ -215,13 +215,24 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   `r` run now (clears that job's view first, so you see just that run),
   `c` clear the view (display only — nothing on disk changes; reopening the
   panel restores it), `y` copy the visible log to the clipboard (original,
-  unwrapped lines, via `wl-copy`), `f` toggle the live journal view (automatic
+  unwrapped lines, via `wl-copy`), `a` analyze with Claude (see below), `f` toggle the live journal view (automatic
   while the job is `RUNNING`), `q`/`Esc` quit. State comes from
   `/var/log/skemos-security/*.summary.json` plus one `systemctl is-active` —
   busy/idle is correct whether a job was started by its timer or by the panel,
   because both start the *same* systemd unit. **No flicker:** alternate screen,
   one write per frame, only changed lines repainted (an idle panel writes
   nothing). "Run now" starts in the background so the panel keeps refreshing.
+- **`a` — analyze with Claude** (optional, needs `claude` installed and signed
+  in; the footer hint says which). Snapshots the selected tool's log
+  (`context.txt` + `log.txt`, up to 1000 lines, honoring a cleared view) into
+  `$XDG_RUNTIME_DIR/skemos-analysis.*` (0700, tmpfs), opens a new `foot` running
+  `security/scripts/security-analyze.sh`, which prints what will be sent and
+  waits for **Enter** before starting `claude` there with
+  `--tools "Read,Grep,Glob"` (read-only: no shell/edit/web/MCP). Log text can
+  carry attacker-controlled strings, so read-only is enforced by the tool
+  allowlist, not by trusting the prompt. The dir is deleted on any exit.
+  Unprivileged; no sudoers change. The availability probe runs in the
+  background (startup + every 30 s, and on demand when `a` is pressed).
 - **Privilege model / ownership rule**: `rkhunter` and `auditd` need root.
   Rather than blanket `sudo`, there's a `skemos-security` group (readable
   logs, no prompt) plus exactly one `/etc/sudoers.d/skemos-security`
@@ -239,6 +250,11 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   overwrites and chowns the target). That is why summaries sit beside the
   logs in `/var/log/skemos-security/` rather than in `~/.local/state`. Found
   in review on 2026-09-18.
+- **Deliberate exception — Claude Code.** The only software outside the
+  official repos: opt-in at bootstrap (default No, never non-interactive,
+  never root, no npm/AUR, installer downloaded to a file first), installed
+  user-level into `~/.local` by Anthropic's own installer. Sends a tool's log
+  to Anthropic only after an explicit Enter in the analysis terminal.
 - **Declined**: `opensnitch` (interactive per-connection popups — exactly
   the friction/bloat this pass was trying to avoid), `fail2ban` (nothing to
   protect while `sshd` stays disabled by default — add it if you ever

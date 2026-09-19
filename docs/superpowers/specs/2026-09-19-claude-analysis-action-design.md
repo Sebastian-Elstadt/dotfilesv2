@@ -34,7 +34,8 @@ Install procedure (bootstrap):
 
 ## Panel action (`a`)
 
-Availability (recomputed at most every 5 s, never blocking a repaint):
+Availability (probed in the background at startup and every 30 s, never blocking
+a repaint; re-checked on demand when `a` is pressed while not ready):
 
 | state | footer hint | pressing `a` |
 |---|---|---|
