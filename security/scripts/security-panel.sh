@@ -61,6 +61,10 @@ META_FILE="$VIS_FILE.meta"                                           # "total_li
 printf -v HBAR '%*s' 400 ''; HBAR=${HBAR// /─}
 printf -v BLANK '%*s' 400 ''
 MAXLOG=1000       # raw log lines loaded, so there is history to scroll
+SELF_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+CLAUDE_FILE="$VIS_FILE.claude"     # written by the background probe: ready | nologin | missing
+CLAUDE_STATE=checking
+last_probe=-100
 declare -a PREV=()
 full=1
 
@@ -124,6 +128,47 @@ copy_view() {
   msg_until=$(( $(date +%s) + 3 ))
 }
 
+# --- Claude analysis (optional; see security-analyze.sh) ---------------------
+claude_bin() {
+  command -v claude 2>/dev/null && return 0
+  [[ -x $HOME/.local/bin/claude ]] && { echo "$HOME/.local/bin/claude"; return 0; }
+  return 1
+}
+
+# Prints ready | nologin | missing. Slow (starts claude) — only ever run in the
+# background, or on demand when the user presses `a`.
+claude_probe() {
+  local bin
+  bin=$(claude_bin) || { echo missing; return 0; }
+  if "$bin" auth status --json 2>/dev/null | jq -e '.loggedIn == true' >/dev/null 2>&1; then
+    echo ready
+  else
+    echo nologin
+  fi
+}
+
+say_msg() { msg=$1; msg_until=$(( $(date +%s) + ${2:-4} )); }
+
+analyze_view() {
+  local job=${JOBS[$selected]} d mode="LAST LOG"
+  if [[ $CLAUDE_STATE != ready ]]; then CLAUDE_STATE=$(claude_probe); fi   # re-check on demand
+  case $CLAUDE_STATE in
+    missing) say_msg "claude not installed — see INSTALL.md"; return ;;
+    nologin) say_msg "run 'claude' once to sign in"; return ;;
+  esac
+  if [[ -z ${XDG_RUNTIME_DIR:-} ]]; then say_msg "no XDG_RUNTIME_DIR — cannot make a private dir"; return; fi
+  d=$(mktemp -d "$XDG_RUNTIME_DIR/skemos-analysis.XXXXXX") || { say_msg "could not create temp dir"; return; }
+  fetch_log "$job" "$MAXLOG" > "$d/log.txt"
+  if [[ ! -s $d/log.txt ]]; then
+    rm -rf -- "$d"; say_msg "nothing to analyze (log is empty/cleared)"; return
+  fi
+  [[ $follow == 1 || ${LIVE[$job]} == RUNNING ]] && mode=LIVE
+  printf 'tool: %s\npurpose: %s\nstatus: %s\nlast run: %s\nview: %s\n' \
+    "${LABEL[$job]}" "${DESC[$job]}" "${STATUS[$job]}" "${WHEN[$job]}" "$mode" > "$d/context.txt"
+  setsid foot -a skemos-analysis -T 'SKEMOS ANALYSIS' -e "$SELF_DIR/security-analyze.sh" "$d" >/dev/null 2>&1 &
+  say_msg "opened analysis terminal" 3
+}
+
 padr() {  # padr "text" width — pad by characters (printf pads by bytes)
   local t=$1 w=$2
   printf '%s%*s' "$t" $(( w - ${#t} > 0 ? w - ${#t} : 0 )) ''
@@ -171,10 +216,18 @@ build_frame() {
   else
     hints=("↑/↓ j/k  scroll" "PgUp/PgDn page" "^u/^d    half page" "g/G      oldest/newest" "←        focus tools")
   fi
-  hints+=("r        run now" "f        live journal" "c        clear view" "y        copy log" "q        quit")
+  hints+=("r        run now" "f        live journal" "c        clear view" "y        copy log")
+  case $CLAUDE_STATE in
+    ready)   hints+=("a        analyze with Claude") ;;
+    missing) hints+=("a        analyze (claude missing)") ;;
+    nologin) hints+=("a        analyze (sign in first)") ;;
+    *)       hints+=("a        analyze (checking…)") ;;
+  esac
+  hints+=("q        quit")
   local h=${#hints[@]} k
   for k in "${!hints[@]}"; do
-    L[n-h+k]="${dim}$(padr " ${hints[k]}" "$LW")${rst}"
+    color=$dim; [[ ${hints[k]} == "a "*Claude && $CLAUDE_STATE == ready ]] && color=$ink
+    L[n-h+k]="${color}$(padr " ${hints[k]}" "$LW")${rst}"
   done
   if (( $(date +%s) < msg_until )); then
     L[n-h-1]="${acc}$(padr " $(trunc "$msg" $((LW-2)))" "$LW")${rst}"
@@ -284,7 +337,7 @@ move_sel() {
   selected=$new; TOP=-1
 }
 
-cleanup() { rm -f "$VIS_FILE" "$META_FILE"; printf '\e[?1006l\e[?1000l\e[?7h\e[?25h\e[?1049l'; }
+cleanup() { rm -f "$VIS_FILE" "$META_FILE" "$CLAUDE_FILE" "$CLAUDE_FILE.tmp"; printf '\e[?1006l\e[?1000l\e[?7h\e[?25h\e[?1049l'; }
 trap cleanup EXIT
 trap 'full=1; TOP=-1' WINCH
 # alt screen, hidden cursor, no autowrap, SGR mouse reporting (wheel scrolls logs
@@ -294,6 +347,11 @@ printf '\e[?1049h\e[?25l\e[?7l\e[?1000h\e[?1006h'
 last_refresh=-1
 while true; do
   if (( SECONDS != last_refresh )); then refresh_state; last_refresh=$SECONDS; fi
+  if (( SECONDS - last_probe >= 30 )); then
+    last_probe=$SECONDS
+    ( claude_probe > "$CLAUDE_FILE.tmp" && mv -f "$CLAUDE_FILE.tmp" "$CLAUDE_FILE" ) >/dev/null 2>&1 &
+  fi
+  [[ -r $CLAUDE_FILE ]] && read -r CLAUDE_STATE < "$CLAUDE_FILE"
   read -t 0 || paint          # while input is queued (wheel bursts), skip the repaint
   if read -rsn1 -t 1 key; then
     if [[ $key == $'\e' ]]; then
@@ -332,6 +390,7 @@ while true; do
       r) clear_view "${JOBS[$selected]}"; TOP=-1; run_job "${JOBS[$selected]}" ;;
       c) clear_view "${JOBS[$selected]}"; TOP=-1 ;;
       y) copy_view ;;
+      a) analyze_view ;;
       f) follow=$(( 1 - follow )); TOP=-1 ;;
     esac
   fi
