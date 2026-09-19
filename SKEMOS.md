@@ -244,6 +244,19 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   source; nothing there is ever run directly, because a user-writable
   script behind a passwordless sudo rule is an instant root escalation.
   Edit the repo, re-run `bootstrap.sh`, to update any of it.
+- **arch-audit acknowledgements.** `arch-audit` compares installed packages to
+  Arch's security tracker, and the tracker holds records that were never closed
+  (status "Vulnerable"/"Unknown", no fixed version) for CVEs from 2020-2025
+  while the installed versions are years newer — a WARN that can never clear.
+  `security/arch-audit-ack.txt` lists those tracker ids (each with package,
+  installed version and the tracker's "affected" version); the job hides
+  acknowledged ids from its WARN but still prints them in the log, and any
+  advisory not listed still warns. The file is installed root-owned into
+  `/usr/local/lib/skemos-security/arch-audit-ack` (integrity-watched), so only
+  someone with sudo can silence a finding. Seeded 2026-09-19 with 20 entries,
+  judged stale from the version gap — not verified per package. To
+  acknowledge a new one: add a line, then re-run bootstrap (or `sudo install -m
+  0644 security/arch-audit-ack.txt /usr/local/lib/skemos-security/arch-audit-ack`).
 - **Root never writes into a user-owned directory** — a root job that writes
   or chowns a file inside a directory the user controls is a symlink-attack
   root escalation (user plants a symlink at the expected filename; root

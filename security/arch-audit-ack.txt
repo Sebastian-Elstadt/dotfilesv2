@@ -1,0 +1,40 @@
+# Skemos — acknowledged arch-audit advisories.
+#
+# Each line: <tracker id>  <package>  # why it is acknowledged.
+# The arch-audit job (security/scripts/arch-audit-scan.sh) hides these ids from
+# its WARN; any advisory NOT listed here still raises a warning. Acknowledged
+# entries are still printed in the job log under their own heading.
+#
+# Installed root-owned into /usr/local/lib/skemos-security/ by bootstrap.sh —
+# only someone with sudo can change it, so malware running as the user cannot
+# silence a real finding. Edit this file, then re-run bootstrap (or `sudo
+# install -m 0644 security/arch-audit-ack.txt /usr/local/lib/skemos-security/arch-audit-ack`).
+#
+# Seeded 2026-09-19. Every entry below is a tracker record that was never
+# closed: status "Vulnerable"/"Unknown" with no fixed version, while the
+# installed version is far newer than the tracker's "affected" version (the
+# CVEs are 2020-2025). Judged stale from the version gap and general knowledge
+# of upstream fixes, not verified per-package — re-check any you doubt at
+# https://security.archlinux.org/<id>
+#
+# id        package     # severity; installed version; tracker affected; CVEs
+AVG-2885  coreutils  # Medium; installed 9.11-2; tracker affected 9.7-1; CVE-2025-5278
+AVG-2262  cpio       # Medium; installed 2.15-3; tracker affected 2.13-2; CVE-2021-38185
+AVG-1855  giflib     # Medium; installed 6.1.3-2; tracker affected 5.2.1-2; CVE-2020-23922
+AVG-2762  grub       # High; installed 2:2.14-1; tracker affected 2:2.06-5; CVE-2022-28737,CVE-2022-28736…
+AVG-2721  libtiff    # Medium; installed 4.7.2-1; tracker affected 4.3.0-2; CVE-2022-1355,CVE-2022-1354
+AVG-2842  libtiff    # Unknown; installed 4.7.2-1; tracker affected 4.4.0-1; CVE-2022-48281,CVE-2022-3970…
+AVG-2898  libxml2    # High; installed 2.15.4-1; tracker affected 2.14.4-1; CVE-2025-6170,CVE-2025-49796…
+AVG-1594  linux      # Low; installed 7.2.6.arch2-1; tracker affected 5.15.8.arch1-1; CVE-2020-35501
+AVG-1879  linux      # Medium; installed 7.2.6.arch2-1; tracker affected 5.15.8.arch1-1; CVE-2021-43976,CVE-2021-4095…
+AVG-2345  linux      # Medium; installed 7.2.6.arch2-1; tracker affected 5.15.8.arch1-1; CVE-2021-31615,CVE-2020-26560…
+AVG-2850  openjpeg2  # Medium; installed 2.5.4-1; tracker affected 2.5.0-3; CVE-2021-3575
+AVG-2765  openssl    # Medium; installed 3.6.4-1; tracker affected 1.1.1.o-1; CVE-2022-2068
+AVG-2882  openssl    # Low; installed 3.6.4-1; tracker affected 3.5.0-1; CVE-2025-4575
+AVG-2901  pam        # High; installed 1.7.2-2; tracker affected 1.7.0-2; CVE-2025-6020
+AVG-2264  perl       # Medium; installed 5.42.2-2; tracker affected 5.34.0-3; CVE-2021-36770
+AVG-2630  perl       # Medium; installed 5.42.2-2; tracker affected 5.34.0-3; CVE-2020-16156
+AVG-2890  perl       # Low; installed 5.42.2-2; tracker affected 5.40.2-1; CVE-2025-40909
+AVG-2893  systemd    # Medium; installed 261.3-1; tracker affected 257.6-1; CVE-2025-4598
+AVG-1892  wget       # Medium; installed 1.25.0-6; tracker affected 1.21.3-1; CVE-2021-31879
+AVG-1420  xdg-utils  # Medium; installed 1.2.1-2; tracker affected 1.1.3+19+g9816ebb-1; CVE-2020-27748

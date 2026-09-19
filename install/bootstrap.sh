@@ -222,6 +222,9 @@ sudo install -o root -g root -m 0755 \
   "$SEC_SRC/scripts/ufw-status.sh" \
   "$SEC_SRC/scripts/audit-status.sh" \
   /usr/local/lib/skemos-security/
+# acknowledged arch-audit tracker ids (data, not executable; root-owned so only
+# sudo can silence a finding)
+sudo install -o root -g root -m 0644 "$SEC_SRC/arch-audit-ack.txt" /usr/local/lib/skemos-security/arch-audit-ack
 
 # `skemos-integrity`: root-owned symlink on PATH (secure_path includes
 # /usr/local/bin); the script resolves the link and elevates via plain sudo.
