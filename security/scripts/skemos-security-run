@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Skemos security — privileged dispatcher. Installed root:root 0755 at
 # /usr/local/bin/skemos-security-run by bootstrap.sh (Task 14); granted
 # NOPASSWD via /etc/sudoers.d/skemos-security for exactly this path.

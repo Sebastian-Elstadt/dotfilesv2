@@ -82,6 +82,7 @@ libnotify                     # notify-send
 brightnessctl                 # backlight keys (now functional on a real panel)
 playerctl                     # media keys (optional)
 less                            # pager — used by the security panel's log view
+pciutils                        # lspci — bootstrap.sh's GPU detection (needs it before this list installs)
 
 # --- Wayland app integration ---
 qt5-wayland

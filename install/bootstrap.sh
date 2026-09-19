@@ -10,15 +10,39 @@
 # Hyprland launch line to ~/.bash_profile, source the Skemos shell dressing
 # from ~/.bashrc, and install the security tooling (root-owned copies,
 # systemd timers, sudoers rule, pacman hook, audit rules, ufw).
-# Does NOT touch disks, the ESP, the bootloader, or enable autologin.
+# Does NOT touch disks, partitioning, the bootloader or autologin. The only
+# boot-adjacent action is a `mkinitcpio -P` you are asked to confirm, which
+# rewrites the initramfs image(s) in /boot.
 
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 say() { printf '\n\033[1m>> %s\033[0m\n' "$*"; }
 
+# Identity values that feed the root-owned conf, the sudoers rule and the audit
+# rules come from the passwd database, not the (user-controllable) environment.
+SK_USER="$(id -un)"
+SK_HOME="$(getent passwd "$(id -u)" | cut -d: -f6 || true)"
+if [[ ! $SK_USER =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+  echo "bootstrap: refusing unusual username '$SK_USER'" >&2; exit 1
+fi
+if [[ $SK_HOME != /* || $SK_HOME == *[[:space:]]* ]]; then
+  echo "bootstrap: refusing unusual home directory '$SK_HOME'" >&2; exit 1
+fi
+[[ $SK_HOME == "$HOME" ]] || echo "bootstrap: note — \$HOME ($HOME) differs from the passwd home ($SK_HOME); using the passwd home for system config." >&2
+# escape for use on the RHS of sed s|...|...|
+SK_HOME_SED="$(printf '%s' "$SK_HOME" | sed 's/[&|\\]/\\&/g')"
+
 # 1. hardware detection ---------------------------------------------------
+# lspci (pciutils) is needed for detection, which runs before the package
+# step — make sure it is there (official repo, tiny).
+if ! command -v lspci >/dev/null 2>&1; then
+  say "lspci not found — installing pciutils for hardware detection."
+  sudo pacman -S --needed pciutils
+fi
+PCI_OUT="$(lspci -nn || true)"
+
 detect_cpu_pkg() {
-  case "$(grep -m1 '^vendor_id' /proc/cpuinfo | awk '{print $NF}')" in
+  case "$(grep -m1 '^vendor_id' /proc/cpuinfo | awk '{print $NF}' || true)" in
     AuthenticAMD) echo amd-ucode ;;
     GenuineIntel) echo intel-ucode ;;
     *) echo "" ;;
@@ -26,7 +50,9 @@ detect_cpu_pkg() {
 }
 
 detect_gpu_pkgs() {
-  if lspci -nn 2>/dev/null | grep -Eq '(VGA compatible controller|3D controller).*\[10de:'; then
+  # here-string, not a pipe: `grep -q` exiting early would SIGPIPE lspci and
+  # pipefail would turn that into a false "no NVIDIA".
+  if grep -Eq '(VGA compatible controller|3D controller).*\[10de:' <<<"$PCI_OUT"; then
     echo "nvidia-open-dkms linux-headers egl-wayland"
   fi
 }
@@ -34,9 +60,10 @@ detect_gpu_pkgs() {
 cpu_pkg="$(detect_cpu_pkg)"
 gpu_pkgs="$(detect_gpu_pkgs)"
 
-say "Detected CPU: $(grep -m1 '^model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ *//') -> ${cpu_pkg:-'(unknown vendor — add your microcode package manually)'}"
+say "Detected CPU: $(grep -m1 '^model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ *//' || true) -> ${cpu_pkg:-'(unknown vendor — add your microcode package manually)'}"
 say "Detected GPU(s):"
-lspci -nn 2>/dev/null | grep -E 'VGA compatible controller|3D controller' | sed 's/^/   /'
+# No VGA/3D line (e.g. a VM's "Display controller") must not kill the script.
+grep -E 'VGA compatible controller|3D controller' <<<"$PCI_OUT" | sed 's/^/   /' || true
 if [[ -n $gpu_pkgs ]]; then
   say "  -> NVIDIA present, adding: $gpu_pkgs"
 fi
@@ -52,10 +79,10 @@ printf '   %s\n' "${ALL_PKGS[@]}"
 read -r -p "   Enter to run 'sudo pacman -Syu --needed ...', Ctrl-C to abort. " _
 sudo pacman -Syu --needed "${ALL_PKGS[@]}"
 
-# 2. nvidia system changes (confirm-before-apply) --------------------
+# 3. nvidia system changes (confirm-before-apply) --------------------
 if [[ -n $gpu_pkgs ]]; then
   say "NVIDIA detected — reviewing system-level changes. Each one asks"
-  say "before touching /etc; none of this touches the bootloader or disks."
+  say "before touching /etc; none of this touches disks or the bootloader. (The only boot-adjacent step is a 'mkinitcpio -P' you confirm.)"
 
   NOUVEAU_CONF=/etc/modprobe.d/nouveau-blacklist.conf
   if [[ -f $NOUVEAU_CONF ]] && grep -q '^blacklist nouveau' "$NOUVEAU_CONF" 2>/dev/null; then
@@ -76,7 +103,8 @@ if [[ -n $gpu_pkgs ]]; then
     say '    MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)'
     read -r -p "  Open it in \$EDITOR now? [y/N] " a
     if [[ $a == y || $a == Y ]]; then
-      sudo "${EDITOR:-vi}" "$MKINITCPIO"
+      SUDO_EDITOR="${EDITOR:-vi}" sudoedit "$MKINITCPIO"
+      say "  'mkinitcpio -P' rewrites the initramfs image(s) in /boot (on systemd-boot layouts /boot is the ESP)."
       read -r -p "  Run 'sudo mkinitcpio -P' now (needed for the change to take effect)? [y/N] " b
       [[ $b == y || $b == Y ]] && sudo mkinitcpio -P
     fi
@@ -95,15 +123,15 @@ if [[ -n $gpu_pkgs ]]; then
   say "    nvidia_drm.modeset=1 nvidia.NVreg_PreserveVideoMemoryAllocations=1"
 fi
 
-# 3. audio --------------------------------------------------------------
+# 4. audio --------------------------------------------------------------
 say "Enabling PipeWire user services."
 systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service
 
-# 4. networking -------------------------------------------------------
+# 5. networking -------------------------------------------------------
 say "Enabling NetworkManager."
 sudo systemctl enable --now NetworkManager.service
 
-# 5. fonts -----------------------------------------------------------
+# 6. fonts -----------------------------------------------------------
 say "Rebuilding font cache."
 # Departure Mono (waybar chrome) is AUR-only. If it is not installed, drop the
 # OFL OTF into the per-user font dir — no root needed.
@@ -128,7 +156,7 @@ if ! fc-list | grep -qi 'Departure Mono'; then
 fi
 fc-cache -f
 
-# 6. ssh readiness -----------------------------------------------------
+# 7. ssh readiness -----------------------------------------------------
 say "Checking SSH readiness."
 if ! compgen -G "$HOME/.ssh/id_ed25519" >/dev/null && ! compgen -G "$HOME/.ssh/id_rsa" >/dev/null; then
   read -r -p "  No SSH keypair found. Generate one now (ed25519)? [Y/n] " a
@@ -141,7 +169,7 @@ else
   say "  SSH keypair already present — skipping."
 fi
 
-# 7. git hooks (gitleaks secret scan) ----------------------------------
+# 8. git hooks (gitleaks secret scan) ----------------------------------
 if [[ "$(git -C "$HOME/.config" config --get core.hooksPath 2>/dev/null)" != ".githooks" ]]; then
   say "Wiring the gitleaks pre-commit hook (git config core.hooksPath .githooks)."
   git -C "$HOME/.config" config core.hooksPath .githooks
@@ -149,7 +177,7 @@ else
   say "git hooks already wired — skipping."
 fi
 
-# 8. launch on login ----------------------------------------------
+# 9. launch on login ----------------------------------------------
 if ! grep -q 'start-hyprland' "$HOME/.bash_profile" 2>/dev/null; then
   say "Appending the Hyprland launch guard to ~/.bash_profile"
   printf '\n' >> "$HOME/.bash_profile"
@@ -158,7 +186,7 @@ else
   say "~/.bash_profile already has a start-hyprland line — leaving it."
 fi
 
-# 9. shell dressing -------------------------------------------------
+# 10. shell dressing -------------------------------------------------
 if ! grep -q 'bash/skemos.bash' "$HOME/.bashrc" 2>/dev/null; then
   say "Sourcing the Skemos shell dressing (prompt + banner) from ~/.bashrc"
   {
@@ -167,7 +195,7 @@ if ! grep -q 'bash/skemos.bash' "$HOME/.bashrc" 2>/dev/null; then
   } >> "$HOME/.bashrc"
 fi
 
-# 10. security tooling ---------------------------------------------------
+# 11. security tooling ---------------------------------------------------
 say "Installing Skemos security tooling (systemd units, sudoers rule, pacman hook)."
 
 SEC_SRC="$HERE/../security"
@@ -176,10 +204,10 @@ SEC_SRC="$HERE/../security"
 if ! getent group skemos-security >/dev/null; then
   sudo groupadd skemos-security
 fi
-sudo usermod -aG skemos-security "$USER"
+sudo usermod -aG skemos-security "$SK_USER"
 
 # (lib.sh sources this as root, so values are shell-quoted with %q)
-printf 'SKEMOS_USER=%q\nSKEMOS_HOME=%q\n' "$USER" "$HOME" \
+printf 'SKEMOS_USER=%q\nSKEMOS_HOME=%q\n' "$SK_USER" "$SK_HOME" \
   | sudo install -o root -g root -m 0644 /dev/stdin /etc/skemos-security.conf
 
 # job scripts + shared lib -> root-owned, not user-writable
@@ -199,16 +227,17 @@ sudo install -o root -g root -m 0755 "$SEC_SRC/scripts/skemos-security-run" /usr
 # systemd units
 sudo install -o root -g root -m 0644 "$SEC_SRC"/systemd/*.service "$SEC_SRC"/systemd/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-for t in skemos-integrity rkhunter-scan arch-audit-scan ufw-status audit-status; do
-  sudo systemctl enable --now "$t.timer"
-done
+# (timers are enabled at the very end, AFTER the first baseline seed, so a
+# timer can never race it)
 
 # sudoers (template substitution, validated before install; staged in a
 # root-owned temp file so it is never user-writable between check and install)
 tmp_sudoers="$(sudo mktemp)"
-sed "s/__SKEMOS_USER__/$USER/g" "$SEC_SRC/sudoers.d/skemos-security" | sudo tee "$tmp_sudoers" >/dev/null
+sudoers_ok=0
+sed "s/__SKEMOS_USER__/$SK_USER/g" "$SEC_SRC/sudoers.d/skemos-security" | sudo tee "$tmp_sudoers" >/dev/null
 if sudo visudo -c -f "$tmp_sudoers"; then
   sudo install -o root -g root -m 0440 "$tmp_sudoers" /etc/sudoers.d/skemos-security
+  sudoers_ok=1
   say "  sudoers rule installed."
 else
   say "  sudoers template failed validation — NOT installed (see visudo output above)."
@@ -221,19 +250,34 @@ sudo install -o root -g root -m 0644 "$SEC_SRC/pacman-hooks/99-skemos-integrity-
 
 # audit rules (template substitution)
 sudo install -d -o root -g root -m 0750 /etc/audit/rules.d
-sed "s|__SKEMOS_HOME__|$HOME|g" "$SEC_SRC/audit-rules/skemos.rules" | sudo install -o root -g root -m 0640 /dev/stdin /etc/audit/rules.d/skemos.rules
+# the ~/.ssh watch needs the directory to exist or auditctl rejects the rule
+# (user-owned, created without sudo; ssh itself requires 0700)
+install -d -m 0700 "$SK_HOME/.ssh"
+sed "s|__SKEMOS_HOME__|$SK_HOME_SED|g" "$SEC_SRC/audit-rules/skemos.rules" | sudo install -o root -g root -m 0640 /dev/stdin /etc/audit/rules.d/skemos.rules
 sudo systemctl enable --now auditd.service
-sudo augenrules --load
+sudo augenrules --load || say "  audit rules failed to load — check 'sudo auditctl -l'"
 
 # ufw — default deny incoming, allow outgoing
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
+sudo systemctl enable ufw.service   # so the firewall comes back after a reboot
 sudo ufw --force enable
 
 # first-run initialization so the panel's first view isn't just "baseline created"
-sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline
+# (--rebaseline-all: hash system AND user paths; the pacman hook's plain
+# --rebaseline deliberately never re-accepts user-file edits)
+sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline-all \
+  || say "  first integrity baseline failed — the first timer run will create it; see /var/log/skemos-security/integrity.log"
 sudo rkhunter --propupd || true
 
+# timers last, so none of them can race the seed above
+for t in skemos-integrity rkhunter-scan arch-audit-scan ufw-status audit-status; do
+  sudo systemctl enable --now "$t.timer"
+done
+
 say "Security tooling installed. Log out/in once for the skemos-security group to take effect."
+if (( ! sudoers_ok )); then
+  say "WARNING: sudoers rule NOT installed — SUPER+S run-now will not work until fixed."
+fi
 
 say "Done. Verify with 'Hyprland --verify-config', then log out and log back in."

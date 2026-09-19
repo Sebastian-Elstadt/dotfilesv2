@@ -9,7 +9,6 @@ out="$(ufw status verbose 2>&1)" || true
 sk_write_log "$JOB" "$out"
 
 if grep -q '^Status: active' <<<"$out"; then
-  rules=$(grep -cE '^\[|^[0-9]+/' <<<"$out" || true)
   sk_write_summary "$JOB" ok "active"
 else
   sk_write_summary "$JOB" warn "ufw is not active"

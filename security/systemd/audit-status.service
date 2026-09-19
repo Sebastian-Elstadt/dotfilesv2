@@ -1,6 +1,8 @@
 [Unit]
 Description=Skemos security — auditd watched-path event snapshot
+After=auditd.service
 
 [Service]
 Type=oneshot
+TimeoutStartSec=10min
 ExecStart=/usr/local/lib/skemos-security/audit-status.sh

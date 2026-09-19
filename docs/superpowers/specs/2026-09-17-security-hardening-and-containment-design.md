@@ -97,8 +97,8 @@ Split into:
 
 ### B3. SSH made functionally ready
 If no SSH keypair exists (`~/.ssh/id_ed25519` or equivalent), offer to
-generate one (`ed25519`, passphrase prompted interactively — never
-generated blank) and print the pubkey for the user to add to GitHub/wherever.
+generate one (`ed25519`; the interactive `ssh-keygen` passphrase prompt is used — an empty
+passphrase is not blocked) and print the pubkey for the user to add to GitHub/wherever.
 `openssh` is installed (client + server binaries), but `sshd.service` is
 **never enabled by default** — an unsolicited listening SSH server is a
 worse default than not having one. `INSTALL.md` notes how to enable it
@@ -140,7 +140,7 @@ paired `.timer`. All five follow the identical pattern (three actually
   `<job>.summary.json`:
   `{"last_run": "<ISO8601>", "status": "ok|warn|fail", "detail": "<short
   string>"}`. The dashboard reads only the summaries for its table (fast,
-  structured) and the full logs on drill-down (`[l]`).
+  structured) and the full logs on drill-down ("view last log" in the panel).
 
 ### C2. Privilege model
 `rkhunter` and reading `auditd`'s log need root; `ufw status`, `arch-audit`
@@ -163,7 +163,7 @@ mostly don't but stay in the same uniform pattern for consistency.
   for a single fixed wrapper, `/usr/local/bin/skemos-security-run
   <jobname>`, which only accepts one of the 5 known job names as its sole
   argument (hardcoded allowlist, rejects anything else). This is what lets
-  the dashboard's `[r]` action start a privileged scan instantly with no
+  the dashboard's "run now" action start a privileged scan instantly with no
   password — while the grant itself is one small, auditable file that can't
   be leveraged for anything beyond "run one of these 5 specific scripts."
   No blanket `sudo`, no broad polkit rule.
@@ -202,17 +202,18 @@ window rule keyed on a distinct app-id in `hypr/rules.lua`; schematic
 palette + box-drawing consistent with `bash/skemos.bash`'s banner) running
 `security/scripts/security-panel.sh`.
 
-- Renders a 5-row table via `fzf` (added to `packages.txt` — tiny, official,
-  gives a clean live-updating selectable list; picked over a hand-rolled
-  bash table for UX): job · last result (`OK`/`WARN`/`FAIL`/`—`) ·
-  last-run time · live state (`IDLE`/`RUNNING`). Refreshes on a ~2s loop by
-  re-reading the summary files + `systemctl is-active` for each unit.
-- Per-row actions: `[r]` run/refresh now (`sudo
-  /usr/local/bin/skemos-security-run <job>` — no password prompt per C2),
-  `[l]` view last full log (`/var/log/skemos-security/<job>.log` via
-  `less`), `[t]` tail live output (`journalctl -u <unit> -f`) — only offered
-  while that row is `RUNNING`. `q`/`Esc` backs out of a sub-view to the
-  table; `q` at the table closes the panel.
+- Renders a 5-row table in plain bash (redrawn on a 2 s poll loop; `fzf` is
+  used only for the per-job action menu): job · last result
+  (`OK`/`WARN`/`FAIL`/`—`) · last-run time · live state (`IDLE`/`RUNNING`),
+  re-reading the summary files + `systemctl is-active` for each unit on every
+  refresh.
+- Press `1`-`5` to pick a job; an `fzf` menu then offers **run now** (`sudo -n
+  /usr/local/bin/skemos-security-run <job>` — no password prompt per C2; it is
+  backgrounded so the table keeps refreshing, and a failure to start, e.g. a
+  missing sudoers rule, is surfaced as a desktop notification), **view last
+  log** (`/var/log/skemos-security/<job>.log` via `less`) and **tail live**
+  (`journalctl -u <unit> -f`) — the last only offered while that job is
+  `RUNNING`. `q` at the table closes the panel.
 
 ### C4. What's watched / scanned
 - **`skemos-integrity`** (home-grown, no new package — the direct answer to
@@ -222,15 +223,28 @@ palette + box-drawing consistent with `bash/skemos.bash`'s banner) running
   `/etc/pacman.conf`, `/etc/pacman.d/hooks/`; this repo's own `hypr/*.lua`)
   gets `sha256`-hashed into a baseline at `/var/lib/skemos-security/
   integrity.db`. Each run diffs current hashes against the baseline and
-  flags anything changed. A **pacman hook**
+  flags anything changed. The list is split into **system** paths (binaries,
+  `/etc` files, `/etc/pacman.d/hooks`, `/etc/sudoers.d`,
+  `/usr/local/lib/skemos-security`, `/usr/local/bin/skemos-security-run` — the
+  root-executed payload itself) and **user** paths (everything under the
+  user's home: rc files, `hypr/*.lua`). A **pacman hook**
   (`/etc/pacman.d/hooks/99-skemos-integrity-resync.hook`, installed by
-  `bootstrap.sh`) re-baselines automatically after every legitimate `pacman`
-  transaction — so a `WARN` means something changed **outside** a tracked
-  package-manager transaction, which is exactly the threat being watched
-  for.
+  `bootstrap.sh`) runs `--rebaseline` after every legitimate `pacman`
+  transaction, which refreshes the **system** entries only and carries the
+  user-path entries over unchanged — otherwise malware editing `~/.bashrc`
+  would be silently absorbed at the next `pacman -Syu`. So a `WARN` on a
+  system path means something changed **outside** a tracked package-manager
+  transaction, and a `WARN` on a user path persists until accepted with the
+  explicit `--rebaseline-all` (which rehashes everything; also used by the
+  bootstrap seed step). Only regular, non-symlink files are hashed, each under
+  a timeout, so a planted FIFO/symlink cannot hang the root job or the pacman
+  transaction; the baseline is written atomically (temp file + rename) and
+  runs are serialised with `flock`.
 - **`audit`/auditd**: real-time kernel watch rules
   (`/etc/audit/rules.d/skemos.rules`) on `~/.ssh`, `/etc/shadow`,
-  `/etc/sudoers.d/`, `/etc/pacman.d/`, `/etc/passwd` — logs who/what/when
+  `/etc/sudoers.d/`, `/etc/pacman.d/`, `/etc/passwd`, all under the single
+  audit key `skemos` (so `audit-status` runs `ausearch -k skemos` and does not
+  count unrelated logins/sudo/service events) — logs who/what/when
   touched them, always-on (not scan-on-demand; `audit-status` just snapshots
   recent matching events via `ausearch` into the uniform log/summary shape).
 - **`rkhunter`**: signature/heuristic rootkit, backdoor, hidden-process, and
@@ -249,11 +263,12 @@ palette + box-drawing consistent with `bash/skemos.bash`'s banner) running
   on-demand tool.
 
 ### C5. Notifications
-Every timer-fired (not manually-triggered — avoid duplicate noise when the
-user is already watching the panel) run that produces a `WARN`/`FAIL`
-summary also fires a `notify-send` through `mako`, consistent with the
-rice's existing notification surface. `OK` results stay silent — only
-surface when there's something to see.
+Every run that produces a `WARN`/`FAIL` summary — whether started by its timer,
+the pacman hook or the panel's "run now" — also fires a `notify-send` through
+`mako`, consistent with the rice's existing notification surface. (Deliberate
+deviation from the original "timer-fired only" idea: the summary writer cannot
+cheaply tell who started the unit, and one notification per non-OK run is
+cheap.) `OK` results stay silent — only surface when there's something to see.
 
 **Explicitly declined** (Part A discussion): `opensnitch` (per-connection
 popups — the interactive friction/bloat this project is trying to avoid)

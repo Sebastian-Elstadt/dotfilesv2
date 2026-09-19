@@ -5,7 +5,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/lib.sh"
 JOB=audit-status
 
-out="$(ausearch -ts today 2>&1)" || out=""
+out="$(ausearch -ts today -k skemos 2>&1)" || out=""
 if [[ -z $out ]] || ! grep -q '^type=' <<<"$out"; then
   sk_write_log "$JOB" "no watched-path events today"
   sk_write_summary "$JOB" ok "no watched-path events today"

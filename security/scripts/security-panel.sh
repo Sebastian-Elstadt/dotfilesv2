@@ -5,7 +5,7 @@
 # /etc/sudoers.d/skemos-security (Task 10/14).
 set -uo pipefail
 
-STATE_DIR="/var/log/skemos-security"
+LOG_DIR="/var/log/skemos-security"
 JOBS=(integrity rkhunter arch-audit ufw-status audit-status)
 declare -A UNIT=(
   [integrity]=skemos-integrity.service
@@ -33,7 +33,7 @@ live_state() {
 }
 
 row() {
-  local job=$1 summary="$STATE_DIR/$job.summary.json"
+  local job=$1 summary="$LOG_DIR/$job.summary.json"
   local status="—" when="—"
   if [[ -f $summary ]]; then
     status=$(jq -r '.status // "—"' "$summary" 2>/dev/null | tr '[:lower:]' '[:upper:]')
@@ -71,11 +71,20 @@ tail live"
     --color="bg+:#34322d,fg+:#e5e1d6,fg:#9a948a,prompt:#c1663a") || return 0
   case "$choice" in
     "run now")
-      sudo /usr/local/bin/skemos-security-run "$job" >/dev/null 2>&1 &
+      # Backgrounded so the panel keeps refreshing. `sudo -n` fails fast (no
+      # TTY password read) if the NOPASSWD rule is missing, and the failure
+      # is surfaced as a desktop notification instead of vanishing.
+      (
+        if ! sudo -n /usr/local/bin/skemos-security-run "$job" >/dev/null 2>&1; then
+          command -v notify-send >/dev/null 2>&1 &&
+            notify-send -a "Skemos Security" "Skemos security" \
+              "could not start $job (is the sudoers rule installed?)"
+        fi
+      ) >/dev/null 2>&1 &
       ;;
     "view last log")
-      if [[ -r "/var/log/skemos-security/$job.log" ]]; then
-        less "/var/log/skemos-security/$job.log"
+      if [[ -r "$LOG_DIR/$job.log" ]]; then
+        less "$LOG_DIR/$job.log"
       else
         echo "no log yet for $job — press Enter to go back"
         read -r

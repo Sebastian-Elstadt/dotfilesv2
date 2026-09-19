@@ -88,9 +88,11 @@ allow-outgoing, enables `auditd` with watch rules for `~/.ssh`, `/etc/shadow`,
 `/etc/sudoers.d`, `/etc/pacman.d`, and `/etc/passwd`, and installs the
 security-monitoring tooling (systemd units, a scoped sudoers rule, a pacman
 hook, audit rules — see `SKEMOS.md` "Security"). Any NVIDIA kernel-module/initramfs/nouveau-
-blacklist change is shown to you and asks before touching `/etc`. It never
-touches disks, the ESP, the bootloader, or autologin. Review it before
-running — it is the only privileged step.
+blacklist change is shown to you and asks before touching `/etc`. It does not
+touch disks, partitioning, the bootloader or autologin; the only boot-adjacent
+action is a `mkinitcpio -P` you are asked to confirm, which rewrites the
+initramfs image(s) in `/boot`. Review it before running — it is the only
+privileged step.
 
 ### Boot straight into the schematic lock screen
 
@@ -268,6 +270,22 @@ A few things worth knowing on a fresh install:
   (`sudo systemctl enable --now sshd`), also add `sudo ufw allow ssh` and
   consider adding `fail2ban` (not installed by default — nothing to guard
   while `sshd` is off).
+- The integrity check WARNs when `~/.bashrc`, `~/.bash_profile` or
+  `hypr/{hyprland,binds,look}.lua` change, and that WARN **persists** across
+  `pacman` upgrades (the pacman hook only re-baselines system paths). After an
+  edit you made on purpose, accept it with
+  `sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline-all`.
+  The watch list also covers `/etc/sudoers.d`, `/usr/local/lib/skemos-security`
+  and `/usr/local/bin/skemos-security-run` (the root-executed tooling).
 - `sudo lynis audit system` is available any time for a deeper, on-demand
   posture check — it's installed but intentionally not wired into the
   automated/notified flow (its output is long-form, better read directly).
+
+**Without the panel** (plain shell, no `SUPER+S`):
+
+```sh
+sudo skemos-security-run <integrity|rkhunter|arch-audit|ufw-status|audit-status>
+less /var/log/skemos-security/<job>.log
+cat /var/log/skemos-security/<job>.summary.json
+systemctl list-timers
+```

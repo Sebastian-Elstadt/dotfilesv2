@@ -1,6 +1,8 @@
 [Unit]
 Description=Skemos security — ufw status snapshot
+After=ufw.service
 
 [Service]
 Type=oneshot
+TimeoutStartSec=10min
 ExecStart=/usr/local/lib/skemos-security/ufw-status.sh

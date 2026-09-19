@@ -176,11 +176,19 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   pair, installed root-owned by `bootstrap.sh` from the `security/` source
   directory (never executed from `~/.config` directly — see the ownership
   note below): `skemos-integrity` (daily, home-grown hash-baseline FIM — a
-  curated watchlist including core binaries, `/etc/passwd`/`/etc/sudoers`/
-  `/etc/pacman.conf`/`/etc/pacman.d/hooks`, your `.bashrc`/`.bash_profile`,
-  and `hypr/hyprland.lua`/`hypr/binds.lua`/`hypr/look.lua`; hand-editing any
-  of those rice files makes it WARN until the next pacman transaction or you
-  manually rebaseline with `sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline`;
+  curated watchlist of SYSTEM paths (core binaries, `/etc/passwd`/
+  `/etc/sudoers`/`/etc/pacman.conf`, `/etc/pacman.d/hooks`, `/etc/sudoers.d`,
+  `/usr/local/lib/skemos-security` and the `/usr/local/bin/skemos-security-run`
+  dispatcher — i.e. the root-executed payload itself) and USER paths (your
+  `.bashrc`/`.bash_profile` and `hypr/hyprland.lua`/`hypr/binds.lua`/
+  `hypr/look.lua`). Only regular non-symlink files are hashed, each under a
+  timeout, so a planted FIFO/symlink cannot hang the job. The pacman hook runs
+  `--rebaseline`, which refreshes the SYSTEM entries only and carries the user
+  entries over unchanged, so a `pacman -Syu` can never launder edits to your
+  rc/rice files into the baseline: hand-editing one of those makes it WARN
+  **until you accept it** with
+  `sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline-all`
+  (which rehashes everything; bootstrap's seed step uses it too);
   `aide` is AUR-only so this is hand-rolled), `rkhunter-scan` (weekly,
   rootkit/backdoor signatures), `arch-audit-scan` (weekly, known-CVE exposure
   in installed packages), `ufw-status` / `audit-status` (hourly snapshots —

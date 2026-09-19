@@ -31,7 +31,9 @@ sk_write_log() {
 # sk_write_summary <job> <status: ok|warn|fail> <detail> — atomically
 # replaces the job's small JSON summary (what the panel's table reads) and
 # notifies on warn/fail regardless of what triggered this run (see plan
-# header). The summary lives in the root-owned log dir next to the logs
+# header). <detail> must stay script-generated text — the JSON escaping
+# below only handles `"`, so never pass raw tool output (or anything a user
+# can influence) as the detail. The summary lives in the root-owned log dir next to the logs
 # (root:skemos-security 0640); root never writes into a user-owned directory.
 sk_write_summary() {
   local job=$1 status=$2 detail=$3
@@ -55,7 +57,7 @@ sk_write_summary() {
 sk_notify() {
   local uid; uid=$(id -u "$SKEMOS_USER" 2>/dev/null) || return 0
   [[ -S "/run/user/$uid/bus" ]] || return 0
-  sudo -u "$SKEMOS_USER" \
+  sudo -u "$SKEMOS_USER" env \
     DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
     XDG_RUNTIME_DIR="/run/user/$uid" \
     notify-send -a "Skemos Security" "$1" "$2" || true

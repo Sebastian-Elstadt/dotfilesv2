@@ -3,4 +3,5 @@ Description=Skemos security — file integrity check
 
 [Service]
 Type=oneshot
+TimeoutStartSec=15min
 ExecStart=/usr/local/lib/skemos-security/integrity-check.sh
