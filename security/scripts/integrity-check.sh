@@ -4,6 +4,7 @@
 # tracked pacman transaction (the paired pacman hook re-baselines the
 # SYSTEM paths after every real upgrade — see 99-skemos-integrity-resync.hook).
 #
+# Command: `skemos-integrity` (on PATH; elevates itself with sudo).
 # Modes:
 #   (no argument)       check current hashes against the baseline.
 #   --rebaseline        refresh ONLY the system entries (binaries, /etc,
@@ -21,7 +22,13 @@
 # to /dev/zero can never hang the job (or the pacman transaction that
 # runs this synchronously).
 set -euo pipefail
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Installed as /usr/local/bin/skemos-integrity (a symlink to this file), so
+# resolve the real location before looking for lib.sh, and elevate through an
+# ordinary password-prompting sudo when run by a user. The passwordless
+# sudoers rule is deliberately NOT extended to this command.
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+[[ $EUID -eq 0 ]] || exec sudo -- "$SELF" "$@"
+HERE="$(dirname "$SELF")"
 source "$HERE/lib.sh"
 
 # Same collation in the timer, the pacman hook and bootstrap, so sorted
@@ -32,7 +39,7 @@ JOB=integrity
 DB_DIR=/var/lib/skemos-security
 DB_FILE="$DB_DIR/integrity.db"
 LOCK_FILE="$DB_DIR/integrity.lock"
-ACCEPT_HINT="sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline-all"
+ACCEPT_HINT="skemos-integrity --rebaseline-all"
 
 # SYSTEM set — root-owned; refreshed by --rebaseline.
 SYS_PATHS=(
@@ -133,7 +140,7 @@ do_baseline() {
 mode="${1:-}"
 case "$mode" in
   ""|--rebaseline|--rebaseline-all) ;;
-  *) echo "usage: integrity-check.sh [--rebaseline | --rebaseline-all]" >&2; exit 2 ;;
+  *) echo "usage: skemos-integrity [--rebaseline | --rebaseline-all]" >&2; exit 2 ;;
 esac
 
 install -d -o root -g root -m 0750 "$DB_DIR"

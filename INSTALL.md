@@ -274,7 +274,7 @@ A few things worth knowing on a fresh install:
   `hypr/{hyprland,binds,look}.lua` change, and that WARN **persists** across
   `pacman` upgrades (the pacman hook only re-baselines system paths). After an
   edit you made on purpose, accept it with
-  `sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline-all`.
+  `skemos-integrity --rebaseline-all`.
   The watch list also covers `/etc/sudoers.d`, `/usr/local/lib/skemos-security`
   and `/usr/local/bin/skemos-security-run` (the root-executed tooling).
 - `sudo lynis audit system` is available any time for a deeper, on-demand

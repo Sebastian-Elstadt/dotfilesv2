@@ -187,7 +187,7 @@ templates — source of truth for the SUPER+S panel; installed root-owned by
   entries over unchanged, so a `pacman -Syu` can never launder edits to your
   rc/rice files into the baseline: hand-editing one of those makes it WARN
   **until you accept it** with
-  `sudo /usr/local/lib/skemos-security/integrity-check.sh --rebaseline-all`
+  `skemos-integrity --rebaseline-all`
   (which rehashes everything; bootstrap's seed step uses it too);
   `aide` is AUR-only so this is hand-rolled), `rkhunter-scan` (weekly,
   rootkit/backdoor signatures), `arch-audit-scan` (weekly, known-CVE exposure

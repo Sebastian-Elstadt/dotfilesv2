@@ -223,6 +223,10 @@ sudo install -o root -g root -m 0755 \
   "$SEC_SRC/scripts/audit-status.sh" \
   /usr/local/lib/skemos-security/
 
+# `skemos-integrity`: root-owned symlink on PATH (secure_path includes
+# /usr/local/bin); the script resolves the link and elevates via plain sudo.
+sudo ln -sfn /usr/local/lib/skemos-security/integrity-check.sh /usr/local/bin/skemos-integrity
+
 # dispatcher wrapper -> /usr/local/bin (the sudoers Cmnd target)
 sudo install -o root -g root -m 0755 "$SEC_SRC/scripts/skemos-security-run" /usr/local/bin/skemos-security-run
 
